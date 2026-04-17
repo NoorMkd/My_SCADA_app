@@ -27,3 +27,17 @@ Navigate to the backend directory and set up your Python environment:
    On Windows use: venv\Scripts\activate
    
    pip install -r requirements.txt
+   
+  # Initialize the database:
+  python create_tables.py 
+  
+  # Assuming you are using uvicorn with FastAPI:
+  uvicorn app.main:app --reload
+
+### 1. Frontend Setup
+
+   cd conveyor-frontend
+
+   npm install
+
+   npm run dev
