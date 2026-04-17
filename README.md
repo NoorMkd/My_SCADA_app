@@ -28,13 +28,13 @@ Navigate to the backend directory and set up your Python environment:
    
    pip install -r requirements.txt
    
-  # Initialize the database:
+  ### Initialize the database:
   python create_tables.py 
   
-  # Assuming you are using uvicorn with FastAPI:
+  ### Assuming you are using uvicorn with FastAPI:
   uvicorn app.main:app --reload
 
-### 1. Frontend Setup
+### 2. Frontend Setup
 
    cd conveyor-frontend
 
