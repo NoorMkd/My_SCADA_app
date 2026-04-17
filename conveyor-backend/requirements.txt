@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+asyncpg
+paho-mqtt
+pydantic
+pydantic-settings
+python-dotenv
+
+# Authentication & Security
+passlib
+bcrypt<4.0.0
+PyJWT
+python-multipart
