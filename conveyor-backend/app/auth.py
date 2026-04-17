@@ -85,7 +85,7 @@ async def check_admin_or_supervisor(current_user = Depends(get_current_user)):
     """
     Blocks the request if the current user is not an admin or supervisor.
     """
-    if current_user.role not in "admin":
+    if current_user.role not in ["admin", "supervisor"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
             detail="Operation restricted to Admins and Supervisors."
