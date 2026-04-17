@@ -23,5 +23,7 @@ Navigate to the backend directory and set up your Python environment:
 
 "" cd conveyor-backend
    python -m venv venv
+   
    On Windows use: venv\Scripts\activate
+   
    pip install -r requirements.txt
