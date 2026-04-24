@@ -276,7 +276,7 @@ function HistoryPage() {
           </div>
 
           {/* ── MAIN CONTENT: left + right ── */}
-          <div className="grid gap-4 flex-1 min-h-0" style={{ gridTemplateColumns: "1fr 400px" }}>
+          <div className="grid gap-4 flex-1 min-h-0" style={{ gridTemplateColumns: "1.8fr 1.2fr" }}>
 
             {/* ── LEFT: Event History (No Filters) ── */}
             <div className="bg-[#0a1020] border border-[#162035] rounded-2xl flex flex-col overflow-hidden">
@@ -329,116 +329,111 @@ function HistoryPage() {
             {/* ── RIGHT: AI Panel & Charts ── */}
             <div className="flex flex-col gap-4 overflow-auto pb-4 pr-1">
 
-              {/* Efficiency Score */}
-              <div className="bg-[#0a1020] border border-[#162035] rounded-2xl p-5 flex-shrink-0">
-                <p className="text-[8px] tracking-[3px] text-[#4a6080] mb-4">
-                  AI ANALYSIS & PREDICTIONS
-                </p>
+              {/* AI Header */}
+              <div className="bg-[#0a1020] border border-[#162035] rounded-xl p-4 flex-shrink-0 flex items-center justify-between shadow-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-[#60a5fa] animate-pulse"></div>
+                  <p className="text-[10px] tracking-[3px] text-[#e2e8f0] font-mono font-bold">
+                    AI INTELLIGENCE MODULE
+                  </p>
+                </div>
+                <div className="flex gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#f87171]"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#fbbf24]"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#3b82f6]"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#10b981]"></div>
+                </div>
+              </div>
 
-                <div className="flex items-center gap-4 mb-4">
-                  {/* Circle gauge */}
-                  <div className="relative w-24 h-24 flex-shrink-0">
-                    <svg viewBox="0 0 80 80" className="w-full h-full">
-                      <circle cx="40" cy="40" r={radius}
-                        fill="none" stroke="#162035" strokeWidth="6"/>
-                      <circle cx="40" cy="40" r={radius}
-                        fill="none"
-                        stroke={data.efficiencyColor}
-                        strokeWidth="6"
-                        strokeLinecap="round"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={offset}
-                        transform="rotate(-90 40 40)"
-                        style={{ transition: "stroke-dashoffset 0.8s ease" }}
-                      />
-                    </svg>
-                    {/* Score inside circle */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="font-mono font-bold text-2xl leading-none"
-                        style={{ color: data.efficiencyColor }}>
-                        {data.efficiencyScore}%
-                      </span>
-                      <span className="text-[8px] text-[#4a6080] mt-1">SCORE</span>
-                    </div>
-                  </div>
-
+              {/* 1. Motor Remaining Useful Life (MRUL) */}
+              <div className="bg-[#1c0f0f] border border-[#f8717133] rounded-2xl p-5 flex flex-col gap-3 relative overflow-hidden transition-all hover:bg-[#251313]">
+                <div className="absolute top-0 left-0 w-1 h-full bg-[#f87171]"></div>
+                <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-mono text-[12px] font-bold mb-2 tracking-wide"
-                      style={{ color: data.efficiencyColor }}>
-                      {data.efficiencyLabel}
+                    <p className="text-[10px] tracking-[2px] text-[#f87171] font-mono mb-1 font-semibold">
+                      REMAINING USEFUL LIFE
                     </p>
-                    <p className="text-[#94a3b8] text-[9.5px] leading-relaxed">
-                      {data.explanation}
+                    <p className="text-3xl font-mono text-[#e2e8f0] font-bold">
+                      {data.rul?.days !== undefined ? `~ ${data.rul.days} Days` : "1 day"}
                     </p>
                   </div>
+                  <div className="bg-[#f871711a] px-2.5 py-1.5 rounded-lg text-lg">
+                    🔴
+                  </div>
+                </div>
+                <div className="bg-[#0b0606] border border-[#f8717122] rounded-lg p-3 mt-1 shadow-inner">
+                  <p className="text-[11px] text-[#fcb6b6] leading-relaxed">
+                    {data.rul?.explanation || "Awaiting AI analysis based on current draw trends..."}
+                  </p>
                 </div>
               </div>
 
-              {/* Loss predictions */}
-              <div className="bg-[#0a1020] border border-[#162035] rounded-2xl p-5 flex-shrink-0">
-                <p className="text-[8px] tracking-[3px] text-[#4a6080] mb-3">
-                  ESTIMATED PRODUCTION LOSSES
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { period: "NEXT 7 DAYS",  ...data.losses.sevenDays  },
-                    { period: "NEXT 30 DAYS", ...data.losses.thirtyDays },
-                  ].map(l => (
-                    <div key={l.period}
-                      className="bg-[#060b14] border border-[#162035] rounded-xl p-3">
-                      <p className="text-[8px] text-[#4a6080] tracking-widest mb-2">
-                        {l.period}
-                      </p>
-                      <p className="font-mono font-bold text-2xl"
-                        style={{ color: data.efficiencyColor }}>
-                        {l.pct}
-                      </p>
-                      <p className="text-[#94a3b8] text-[10px] mt-1">{l.DT}</p>
-                      <p className="text-[8px] text-[#2a3a50] mt-1 tracking-wide">if no action taken</p>
-                    </div>
-                  ))}
+              {/* 2. Failure Probability */}
+              <div className="bg-[#18140a] border border-[#fbbf2433] rounded-2xl p-5 flex flex-col gap-3 relative overflow-hidden transition-all hover:bg-[#1f1a0d]">
+                <div className="absolute top-0 left-0 w-1 h-full bg-[#fbbf24]"></div>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-[10px] tracking-[2px] text-[#fbbf24] font-mono mb-1 font-semibold">
+                      FAILURE PROBABILITY (24H)
+                    </p>
+                    <p className="text-3xl font-mono text-[#e2e8f0] font-bold">
+                      {data.failureProb?.prob !== undefined ? `${data.failureProb.prob}%` : "--%"}
+                    </p>
+                  </div>
+                  <div className="bg-[#fbbf241a] px-2.5 py-1.5 rounded-lg text-lg">
+                    🟠
+                  </div>
+                </div>
+                <div className="bg-[#0b0905] border border-[#fbbf2422] rounded-lg p-3 mt-1 shadow-inner">
+                  <p className="text-[11px] text-[#fde68a] leading-relaxed">
+                    {data.failureProb?.explanation || "Awaiting AI analysis based on sensor trends, alerts, and tech logs..."}
+                  </p>
                 </div>
               </div>
 
-              {/* Recommendations */}
-              <div className="bg-[#0a1020] border border-[#162035] rounded-2xl p-5 flex-shrink-0">
-                <p className="text-[8px] tracking-[3px] text-[#4a6080] mb-3">
-                  RECOMMENDED ACTIONS
-                </p>
-                <div className="flex flex-col gap-2">
-                  {data.recommendations.map((rec, i) => (
-                    <div key={i}
-                      className="rounded-xl p-3 flex items-center gap-3"
-                      style={{
-                        background: "#060b14",
-                        border: `1px solid ${rec.border}`,
-                      }}>
-                      {/* Number badge */}
-                      <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 font-mono"
-                        style={{
-                          background: rec.bg,
-                          border: `1px solid ${rec.border}`,
-                          color: rec.color,
-                        }}>
-                        {rec.num}
-                      </div>
-                      {/* Text */}
-                      <div className="flex-1">
-                        <p className="text-[#e2e8f0] font-mono text-[10px] mb-1">
-                          {rec.action}
-                        </p>
-                        <p className="text-[#4a6080] text-[8.5px]">
-                          {rec.impact}
-                        </p>
-                      </div>
-                      {/* Saving */}
-                      <p className="font-mono font-bold text-[12px] flex-shrink-0"
-                        style={{ color: rec.color }}>
-                        {rec.save}
-                      </p>
-                    </div>
-                  ))}
+              {/* 3. Production Efficiency */}
+              <div className="bg-[#0a1320] border border-[#60a5fa33] rounded-2xl p-5 flex flex-col gap-3 relative overflow-hidden transition-all hover:bg-[#0c1829]">
+                <div className="absolute top-0 left-0 w-1 h-full bg-[#60a5fa]"></div>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-[10px] tracking-[2px] text-[#60a5fa] font-mono mb-1 font-semibold">
+                      PRODUCTION EFFICIENCY
+                    </p>
+                    <p className="text-3xl font-mono text-[#e2e8f0] font-bold">
+                      {data.productionScore?.score !== undefined ? `${data.productionScore.score}%` : "--%"}
+                    </p>
+                  </div>
+                  <div className="bg-[#60a5fa1a] px-2.5 py-1.5 rounded-lg text-lg">
+                    🔵
+                  </div>
+                </div>
+                <div className="bg-[#060b14] border border-[#60a5fa22] rounded-lg p-3 mt-1 shadow-inner">
+                  <p className="text-[11px] text-[#bfdbfe] leading-relaxed">
+                    {data.productionScore?.explanation || "Awaiting daily capacity calculation..."}
+                  </p>
+                </div>
+              </div>
+
+              {/* 4. Maintenance Due Score */}
+              <div className="bg-[#071a14] border border-[#00e5a033] rounded-2xl p-5 flex flex-col gap-3 relative overflow-hidden transition-all hover:bg-[#09231b]">
+                <div className="absolute top-0 left-0 w-1 h-full bg-[#00e5a0]"></div>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-[10px] tracking-[2px] text-[#00e5a0] font-mono mb-1 font-semibold">
+                      MAINTENANCE DUE SCORE
+                    </p>
+                    <p className="text-3xl font-mono text-[#e2e8f0] font-bold">
+                      {data.maintenanceScore?.days !== undefined ? `In ${data.maintenanceScore.days} Days` : "--"}
+                    </p>
+                  </div>
+                  <div className="bg-[#00e5a01a] px-2.5 py-1.5 rounded-lg text-lg">
+                    🟢
+                  </div>
+                </div>
+                <div className="bg-[#040e0b] border border-[#00e5a022] rounded-lg p-3 mt-1 shadow-inner">
+                  <p className="text-[11px] text-[#a7f3d0] leading-relaxed">
+                    {data.maintenanceScore?.explanation || "Awaiting maintenance prediction based on timestamps and sensor baselines..."}
+                  </p>
                 </div>
               </div>
 
