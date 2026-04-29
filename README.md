@@ -36,8 +36,6 @@ pip install -r requirements.txt
 ###Create all tables (users table included)
 python create_tables.py
 
-###. Create the 4 demo users (admin, supervisor, operator, technician)
-python create_demo_users.py
 
 ###. Start the backend server
 python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
