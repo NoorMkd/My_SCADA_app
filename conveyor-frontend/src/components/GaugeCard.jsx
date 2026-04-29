@@ -15,16 +15,16 @@ function GaugeCard({ label, value, max, unit, warnAt, critAt, offline }) {
   const pct = offline ? 0 : Math.min(value / max, 1)
 
   // Pick color based on status
-  let color = "#00e5a0"  // green = normal
-  if (offline)       color = "#2a3a50"  // gray = offline
-  else if (pct >= critAt) color = "#f87171"  // red = critical
-  else if (pct >= warnAt) color = "#fbbf24"  // amber = warning
+  let color = "#39ff14"  // Neon Green
+  if (offline)       color = "#262626"  // Muted gray
+  else if (pct >= critAt) color = "#ff3131"  // Neon Red
+  else if (pct >= warnAt) color = "#ffee00"  // Neon Yellow
 
   // Status text shown below the gauge
-  const status = offline ? "OFFLINE"
-    : pct >= critAt ? "● CRITICAL"
-    : pct >= warnAt ? "⚠ WARNING"
-    : "● NORMAL"
+  const status = offline ? "---"
+    : pct >= critAt ? "! CRITICAL"
+    : pct >= warnAt ? "Δ WARNING"
+    : "√ OPERATIONAL"
 
   // SVG arc math
   // The gauge goes from -215° to +35° (250° total sweep)
@@ -47,11 +47,11 @@ function GaugeCard({ label, value, max, unit, warnAt, critAt, offline }) {
   const displayValue = offline ? "--" : value
 
   return (
-    <div className="bg-[#0a1020] border border-[#162035] rounded-2xl p-4 flex flex-col items-center"
-         style={{ borderColor: color + "33" }}>
+    <div className="bg-bg-card border border-border-card rounded-sm p-4 flex flex-col items-center hover:border-text-dim transition-colors group"
+         style={{ boxShadow: offline ? 'none' : `inset 0 0 20px ${color}05` }}>
 
       {/* Sensor name */}
-      <p className="text-[8px] tracking-widest text-[#4a6080] mb-1">{label}</p>
+      <p className="text-[7px] font-bold tracking-[0.2em] text-text-muted mb-2 group-hover:text-primary transition-colors">{label}</p>
 
       {/* SVG Gauge */}
       <svg viewBox="0 0 130 100" className="w-full">
@@ -59,40 +59,38 @@ function GaugeCard({ label, value, max, unit, warnAt, critAt, offline }) {
         {/* Background arc (gray track) */}
         <path
           d={`M ${startX} ${startY} A ${r} ${r} 0 1 1 ${bgEndX} ${bgEndY}`}
-          fill="none" stroke="#0f1e30" strokeWidth={strokeW} strokeLinecap="round"
+          fill="none" stroke="#1a1a1a" strokeWidth={strokeW} strokeLinecap="square"
         />
 
         {/* Colored value arc */}
         {pct > 0 && (
           <path
             d={`M ${startX} ${startY} A ${r} ${r} 0 ${largeArc} 1 ${endX} ${endY}`}
-            fill="none" stroke={color} strokeWidth={strokeW} strokeLinecap="round"
+            fill="none" stroke={color} strokeWidth={strokeW} strokeLinecap="square"
+            style={{ filter: `drop-shadow(0 0 3px ${color}66)` }}
           />
         )}
-
-        {/* Center circle background */}
-        <circle cx={cx} cy={cy} r="33" fill="#060b14" />
 
         {/* Big value number */}
         <text
           x={cx} y={cy + 6}
           textAnchor="middle"
           fill={color}
-          fontSize="26"
+          fontSize="28"
           fontFamily="monospace"
-          fontWeight="bold"
+          fontWeight="900"
         >
           {displayValue}
         </text>
 
         {/* Unit label */}
-        <text x={cx} y={cy + 20} textAnchor="middle" fill={color + "99"} fontSize="10" fontFamily="monospace">
+        <text x={cx} y={cy + 22} textAnchor="middle" fill={color} fillOpacity="0.4" fontSize="8" fontWeight="bold">
           {unit}
         </text>
 
         {/* Min / Max labels */}
-        <text x="8" y="92" fill="#162035" fontSize="7" fontFamily="monospace">0</text>
-        <text x={max >= 100 ? 106 : 108} y="92" fill="#162035" fontSize="7" fontFamily="monospace">{max}</text>
+        <text x="8" y="92" fill="#404040" fontSize="6">000</text>
+        <text x={max >= 100 ? 106 : 108} y="92" fill="#404040" fontSize="6">{max.toString().padStart(3, '0')}</text>
       </svg>
 
       {/* Status text */}

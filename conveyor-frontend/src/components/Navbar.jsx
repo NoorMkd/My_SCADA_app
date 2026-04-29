@@ -16,36 +16,36 @@ function Navbar() {
   }
 
   const roleColors = {
-    admin:      "text-[#60a5fa] border-[#60a5fa33]",
-    supervisor: "text-purple-400 border-purple-400/30",
-    operator:   "text-[#00e5a0] border-[#00e5a044]",
-    technician: "text-[#fbbf24] border-[#fbbf2444]",
+    admin:      "text-primary border-primary/30",
+    supervisor: "text-secondary border-secondary/30",
+    operator:   "text-success border-success/30",
+    technician: "text-warning border-warning/30",
   }
 
   return (
-    <nav className="bg-[#0a1020] border-b border-[#162035] px-5 py-2.5 flex items-center justify-between flex-shrink-0">
+    <nav className="bg-[var(--color-nav-bg)] border-b border-border-card px-5 py-2.5 flex items-center justify-between flex-shrink-0 relative z-10 shadow-md">
       <div className="flex items-center gap-3">
-        <div className="w-2 h-2 bg-[#00e5a0] rounded-full animate-pulse" />
-        <span className="text-[#00e5a0] font-mono text-[11px] tracking-[4px]">
-          CONVEYOR SCADA
+        <div className="w-2 h-2 bg-success rounded-sm animate-pulse shadow-[0_0_8px_var(--color-success)]" />
+        <span className="text-white font-mono text-[13px] font-bold tracking-[0.2em]">
+          CONVEYOR / SCADA
         </span>
-        <span className="text-[#162035] text-sm">│</span>
-        <span className="text-[#2a3a50] font-mono text-[9px] tracking-widest">
-          {selected ? `${selected.name.toUpperCase()} · ${selected.zone}` : ""}
+        <span className="text-border-card text-sm">|</span>
+        <span className="text-primary font-mono text-[10px] tracking-widest font-bold">
+          {selected ? `UPLINK: ${selected.name.toUpperCase()} [${selected.zone}]` : "AWAITING LINK..."}
         </span>
       </div>
-      <div className="flex items-center gap-2.5">
-        <span className={`font-mono text-[10px] border px-2.5 py-0.5 rounded ${roleColors[user?.role]}`}>
+      <div className="flex items-center gap-3">
+        <span className={`font-mono text-[9px] border border-l-2 px-2 py-0.5 rounded-none ${roleColors[user?.role]}`}>
           {user?.role?.toUpperCase()}
         </span>
-        <span className="text-[#4a6080] font-mono text-[10px]">
+        <span className="text-text-muted font-mono text-[10px] uppercase">
           {user?.username}
         </span>
         <button
           onClick={handleLogout}
-          className="text-[#f87171] border border-[#f8717133] hover:bg-[#f8717111] font-mono text-[10px] px-2.5 py-0.5 rounded transition-colors duration-200"
+          className="bg-danger text-white hover:bg-red-700 font-mono text-[10px] uppercase px-3 py-1 rounded-sm border border-danger transition-colors duration-150"
         >
-          LOGOUT
+          DISCONNECT
         </button>
       </div>
     </nav>

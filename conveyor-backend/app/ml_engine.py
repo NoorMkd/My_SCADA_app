@@ -62,14 +62,14 @@ async def generate_report(
     # ── Label and color ───────────────────────────────────
     # Matches the colors already in your HistoryPage.jsx
     if efficiency >= 80:
-        label = "GOOD EFFICIENCY"
-        color = "#00e5a0"    # green
+        label = "SYSTEM OPTIMAL"
+        color = "#0098c2"    # pacific blue
     elif efficiency >= 60:
-        label = "AVERAGE EFFICIENCY"
-        color = "#fbbf24"    # amber
+        label = "SYSTEM NOMINAL"
+        color = "#d5a507"    # galliano
     else:
-        label = "LOW EFFICIENCY"
-        color = "#f87171"    # red
+        label = "CRITICAL FAILURE"
+        color = "#cd6413"    # meteor
 
     # ── Natural language explanation ──────────────────────
     # Builds a sentence describing what the data shows
@@ -187,9 +187,9 @@ def _build_recommendations(
             "action": "Inspect motor cooling system — URGENT",
             "impact": f"Peak temperature {max_temp:.0f}°C exceeded critical limit",
             "save":   "−8%",
-            "color":  "#f87171",
-            "bg":     "#1c0f0f",
-            "border": "#f8717133",
+            "color":  "#cd6413",
+            "bg":     "#111d29",
+            "border": "#cd641333",
         })
         i += 1
 
@@ -200,9 +200,9 @@ def _build_recommendations(
             "action": "Check motor ventilation",
             "impact": f"Average temp {avg_temp:.1f}°C above warning threshold",
             "save":   "−5%",
-            "color":  "#fbbf24",
-            "bg":     "#18140a",
-            "border": "#fbbf2433",
+            "color":  "#d5a507",
+            "bg":     "#111d29",
+            "border": "#d5a50733",
         })
         i += 1
 
@@ -213,9 +213,9 @@ def _build_recommendations(
             "action": "Check motor load and belt tension",
             "impact": f"Average current {avg_current:.1f}A above normal range",
             "save":   "−6%",
-            "color":  "#fbbf24",
-            "bg":     "#18140a",
-            "border": "#fbbf2433",
+            "color":  "#d5a507",
+            "bg":     "#111d29",
+            "border": "#d5a50733",
         })
         i += 1
 
@@ -226,9 +226,9 @@ def _build_recommendations(
             "action": "Review and resolve open fault alerts",
             "impact": f"{len(unresolved_alerts)} fault(s) need attention",
             "save":   "−4%",
-            "color":  "#f87171",
-            "bg":     "#1c0f0f",
-            "border": "#f8717133",
+            "color":  "#cd6413",
+            "bg":     "#111d29",
+            "border": "#cd641333",
         })
         i += 1
 
@@ -239,9 +239,9 @@ def _build_recommendations(
             "action": "Schedule preventive maintenance",
             "impact": f"Last maintenance was {days_since} days ago",
             "save":   "−3%",
-            "color":  "#00e5a0",
-            "bg":     "#071a14",
-            "border": "#00e5a033",
+            "color":  "#0098c2",
+            "bg":     "#111d29",
+            "border": "#0098c233",
         })
         i += 1
 
@@ -252,9 +252,9 @@ def _build_recommendations(
             "action": "Continue current maintenance schedule",
             "impact": "All systems within normal range",
             "save":   "+2%",
-            "color":  "#00e5a0",
-            "bg":     "#071a14",
-            "border": "#00e5a033",
+            "color":  "#0098c2",
+            "bg":     "#111d29",
+            "border": "#0098c233",
         })
 
     return recs
@@ -331,12 +331,12 @@ def _empty_report(conveyor_id: int) -> dict:
         "conveyor_id":     conveyor_id,
         "generated_at":    datetime.now(timezone.utc).isoformat(),
         "efficiencyScore": 0,
-        "efficiencyLabel": "NO DATA YET",
-        "efficiencyColor": "#4a6080",
+        "efficiencyLabel": "NO SIGNAL",
+        "efficiencyColor": "#404040",
         "explanation": (
-            "No sensor data available yet. "
-            "Make sure the ESP32 is on and "
-            "Mosquitto is running."
+            "System waiting for uplink... "
+            "Telemetry stream not detected. "
+            "Check Mosquitto broker status."
         ),
         "losses": {
             "sevenDays":  {"pct": "N/A", "DT": "N/A"},

@@ -50,13 +50,13 @@ function DashboardPage() {
   // Alert color helper
   function alertStyle(level) {
     if (level === "critical") return {
-      bg: "#1c0f0f", border: "#f8717144", text: "#f87171", icon: "⚠"
+      bg: "var(--color-bg-base)", border: "var(--color-danger)", text: "var(--color-danger)", icon: "⚠"
     }
     if (level === "warning") return {
-      bg: "#18140a", border: "#fbbf2444", text: "#fde68a", icon: "⚠"
+      bg: "var(--color-bg-base)", border: "var(--color-warning)", text: "var(--color-warning)", icon: "⚠"
     }
     return {
-      bg: "#071a14", border: "#00e5a033", text: "#00e5a0", icon: "✓"
+      bg: "var(--color-bg-base)", border: "var(--color-primary)", text: "var(--color-primary)", icon: "✓"
     }
   }
 
@@ -65,7 +65,7 @@ function DashboardPage() {
 
   return (
     // Full screen dark background — flex column so navbar + content stack
-    <div className="min-h-screen bg-[#060b14] flex flex-col">
+    <div className="min-h-screen bg-bg-darker flex flex-col">
 
       {/* ── NAVBAR ── */}
       <Navbar />
@@ -130,8 +130,8 @@ function DashboardPage() {
             {/* ── MIDDLE COLUMN: CONTROLS + ALERTS ── */}
             <div className="flex flex-col gap-3 h-full">
               {/* ── MACHINE CONTROLS (middle-top) ── */}
-              <div className="bg-[#0a1020] border border-[#162035] rounded-2xl p-5 flex-[1] flex flex-col justify-center">
-                <p className="text-[10px] tracking-widest text-[#4a6080] mb-3">
+              <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl p-5 flex-[1] flex flex-col justify-center">
+                <p className="text-[10px] tracking-widest text-[var(--color-text-dim)] mb-3">
                   MACHINE CONTROL —{" "}
                   <span className="text-[#94a3b8]">{cv.name.toUpperCase()}</span>
                 </p>
@@ -144,8 +144,8 @@ function DashboardPage() {
                     disabled={!canControl || !cv.isRunning}
                     className={`font-mono text-[15px] tracking-wider py-3 px-2 rounded-xl border transition-all duration-150 active:scale-95
                       ${!canControl || !cv.isRunning
-                        ? "text-[#2a3a50] border-[#162035] cursor-not-allowed"
-                        : "text-[#f87171] border-[#f8717155] bg-[#180f0f] hover:bg-[#f8717122] cursor-pointer"
+                        ? "text-[var(--color-text-dim)] border-[var(--color-border-card)] cursor-not-allowed"
+                        : "text-[#cd6413] border-[#cd641355] bg-[#180f0f] hover:bg-[#cd641322] cursor-pointer"
                       }`}
                   >
                     ■ STOP
@@ -157,8 +157,8 @@ function DashboardPage() {
                     disabled={!canControl || cv.isRunning}
                     className={`font-mono text-[15px] tracking-wider py-3 px-2 rounded-xl border transition-all duration-150 active:scale-95
                       ${!canControl || cv.isRunning
-                        ? "text-[#2a3a50] border-[#162035] cursor-not-allowed"
-                        : "text-[#00e5a0] border-[#00e5a055] bg-[#071a14] hover:bg-[#00e5a022] cursor-pointer"
+                        ? "text-[var(--color-text-dim)] border-[var(--color-border-card)] cursor-not-allowed"
+                        : "text-[#0098c2] border-[#0098c255] bg-[var(--color-bg-base)] hover:bg-[#0098c222] cursor-pointer"
                       }`}
                   >
                     ▶ START
@@ -170,8 +170,8 @@ function DashboardPage() {
                     disabled={!canControl || !cv.isRunning}
                     className={`font-mono text-[15px] tracking-wider py-3 px-2 rounded-xl border transition-all duration-150 active:scale-95
                       ${!canControl || !cv.isRunning
-                        ? "text-[#2a3a50] border-[#162035] cursor-not-allowed"
-                        : "text-[#60a5fa] border-[#60a5fa44] bg-[#0a1320] hover:bg-[#60a5fa22] cursor-pointer"
+                        ? "text-[var(--color-text-dim)] border-[var(--color-border-card)] cursor-not-allowed"
+                        : "text-[var(--color-primary)] border-[var(--color-primary)44] bg-[#0a1320] hover:bg-[var(--color-primary)22] cursor-pointer"
                       }`}
                   >
                     ▲ SPD +
@@ -183,8 +183,8 @@ function DashboardPage() {
                     disabled={!canControl || !cv.isRunning}
                     className={`font-mono text-[15px] tracking-wider py-3 px-2 rounded-xl border transition-all duration-150 active:scale-95
                       ${!canControl || !cv.isRunning
-                        ? "text-[#2a3a50] border-[#162035] cursor-not-allowed"
-                        : "text-[#60a5fa] border-[#60a5fa44] bg-[#0a1320] hover:bg-[#60a5fa22] cursor-pointer"
+                        ? "text-[var(--color-text-dim)] border-[var(--color-border-card)] cursor-not-allowed"
+                        : "text-[var(--color-primary)] border-[var(--color-primary)44] bg-[#0a1320] hover:bg-[var(--color-primary)22] cursor-pointer"
                       }`}
                   >
                     ▼ SPD −
@@ -193,15 +193,15 @@ function DashboardPage() {
 
                 {/* Role notice for technician */}
                 {!canControl && (
-                  <p className="text-[15px] text-[#4a6080] mt-2 tracking-wider">
+                  <p className="text-[15px] text-[var(--color-text-dim)] mt-2 tracking-wider">
                     ⊘ Technician role — view only
                   </p>
                 )}
               </div>
 
               {/* ── ALERTS (exactly under machine controls) ── */}
-              <div className="bg-[#0a1020] border border-[#162035] rounded-2xl p-4 flex-[2] min-h-[160px]">
-                <p className="text-[15px] tracking-widest text-[#4a6080] mb-3">
+              <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl p-4 flex-[2] min-h-[160px]">
+                <p className="text-[15px] tracking-widest text-[var(--color-text-dim)] mb-3">
                   ALERTS —{" "}
                   <span className="text-[#94a3b8]">{cv.name.toUpperCase()}</span>
                 </p>
@@ -212,9 +212,9 @@ function DashboardPage() {
                     <span
                       className="font-mono text-[15px] px-3 py-1.5 rounded-lg border"
                       style={{
-                        color: "#00e5a0",
-                        borderColor: "#00e5a033",
-                        background: "#071a14"
+                        color: "#0098c2",
+                        borderColor: "#0098c233",
+                        background: "var(--color-bg-base)"
                       }}
                     >
                       ✓ ALL SYSTEMS NORMAL

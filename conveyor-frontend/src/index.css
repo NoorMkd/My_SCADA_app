@@ -1,1 +1,55 @@
 @import "tailwindcss";
+
+@theme {
+  /* RAW INDUSTRIAL SCADA PALETTE */
+  --color-primary: #0098c2;     /* Pacific Blue (Action/Highlight) */
+  --color-secondary: #0062a3;   /* Endeavour (Medium Dark Blue) */
+  
+  --color-success: #10b981;     /* Industrial Green (Emerald) */
+  --color-warning: #f59e0b;     /* Industrial Amber */
+  --color-danger: #ef4444;      /* Industrial Red */
+  
+  /* VERY DARK GRITTY BACKGROUND */
+  --color-bg-base: #030508;     /* Almost pitch black/navy */
+  --color-bg-card: #0b121a;     /* Very dark blue-gray for content panels */
+  --color-bg-darker: #020305;   /* Vantablack void */
+  
+  --color-nav-bg: #1d3044;      /* Cloud Burst (User kept this for Nav/Sidebar) */
+  
+  --color-border-card: #1f364d; /* Slightly lighter than nav for borders */
+  
+  --color-text-muted: #6b849c;  
+  --color-text-dim: #3e5266;
+  
+  --font-mono: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-base text-white font-mono selection:bg-primary/30 selection:text-primary;
+    background-image: 
+      linear-gradient(rgba(29, 48, 68, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(29, 48, 68, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+}
+
+/* Custom effects for raw terminal look */
+@layer utilities {
+  .panel-border {
+    border: 1px solid var(--color-border-card);
+    border-top: 3px solid var(--color-primary);
+  }
+  .panel-border-danger {
+    border: 1px solid var(--color-border-card);
+    border-top: 3px solid var(--color-danger);
+  }
+  .panel-border-warning {
+    border: 1px solid var(--color-border-card);
+    border-top: 3px solid var(--color-warning);
+  }
+  .panel-border-success {
+    border: 1px solid var(--color-border-card);
+    border-top: 3px solid var(--color-success);
+  }
+}

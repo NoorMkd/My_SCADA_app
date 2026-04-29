@@ -20,10 +20,10 @@ function ProductionPanel() {
   const canAddConveyor = ["admin", "supervisor"].includes(user?.role)
 
   return (
-    <div className="border-l border-[#162035] bg-[#060b14] p-2.5 flex flex-col gap-2 overflow-y-auto">
+    <div className="border-l border-[var(--color-border-card)] bg-[var(--color-bg-base)] p-2.5 flex flex-col gap-2 overflow-y-auto">
 
       {/* Panel title */}
-      <p className="text-[#4a6080] text-[8px] tracking-[3px] pb-2 border-b border-[#162035] flex-shrink-0">
+      <p className="text-[var(--color-text-dim)] text-[8px] tracking-[3px] pb-2 border-b border-[var(--color-border-card)] flex-shrink-0">
         PRODUCTION LINE
       </p>
 
@@ -35,10 +35,10 @@ function ProductionPanel() {
 
         // Border color based on state
         let borderColor = "#7589b4"
-        if (isActive && hasWarn)    borderColor = "#fbbf2455"
-        else if (isActive)          borderColor = "#00e5a055"
-        else if (!cv.isRunning)     borderColor = "#f8717133"
-        else if (hasWarn)           borderColor = "#fbbf2433"
+        if (isActive && hasWarn)    borderColor = "#d5a50755"
+        else if (isActive)          borderColor = "#0098c255"
+        else if (!cv.isRunning)     borderColor = "#cd641333"
+        else if (hasWarn)           borderColor = "#d5a50733"
 
         // Background color
         let bgColor = "transparent"
@@ -50,7 +50,7 @@ function ProductionPanel() {
           <div
             key={cv.id}
             onClick={() => setSelectedId(cv.id)}
-            className="border rounded-xl p-2.5 cursor-pointer transition-all duration-200 hover:bg-[#0a1020]"
+            className="border rounded-xl p-2.5 cursor-pointer transition-all duration-200 hover:bg-[var(--color-bg-card)]"
             style={{ borderColor, background: bgColor }}
           >
             {/* Conveyor name + status dot */}
@@ -59,8 +59,8 @@ function ProductionPanel() {
               <div
                 className="w-2 h-2 rounded-full"
                 style={{
-                  background: !cv.isRunning ? "#f87171"
-                    : hasWarn ? "#fbbf24" : "#00e5a0",
+                  background: !cv.isRunning ? "#cd6413"
+                    : hasWarn ? "#d5a507" : "#0098c2",
                   // blinking dot for warning
                   animation: hasWarn && cv.isRunning ? "pulse 1s infinite" : "none"
                 }}
@@ -69,16 +69,16 @@ function ProductionPanel() {
 
             {/* Sensor values */}
             {[
-              ["TEMP",    cv.isRunning ? `${cv.sensors.temperature}°C` : "--", cv.sensors.temperature >= 65 ? "#fbbf24" : "#00e5a0"],
-              ["CURRENT", cv.isRunning ? `${cv.sensors.current}A`      : "--", cv.sensors.current >= 14     ? "#fbbf24" : "#00e5a0"],
-              ["SPEED",   `${cv.speed}%`,  "#60a5fa"],
-              ["ITEMS",   `${cv.itemsToday}`, "#60a5fa"],
+              ["TEMP",    cv.isRunning ? `${cv.sensors.temperature}°C` : "--", cv.sensors.temperature >= 65 ? "#d5a507" : "#0098c2"],
+              ["CURRENT", cv.isRunning ? `${cv.sensors.current}A`      : "--", cv.sensors.current >= 14     ? "#d5a507" : "#0098c2"],
+              ["SPEED",   `${cv.speed}%`,  "var(--color-primary)"],
+              ["ITEMS",   `${cv.itemsToday}`, "var(--color-primary)"],
             ].map(([label, value, color]) => (
               <div key={label} className="flex justify-between text-[9px] mb-0.5">
-                <span className="text-[#2a3a50]">{label}</span>
+                <span className="text-[var(--color-text-dim)]">{label}</span>
                 <span
                   className="font-mono"
-                  style={{ color: cv.isRunning || label === "ITEMS" ? color : "#4a6080" }}
+                  style={{ color: cv.isRunning || label === "ITEMS" ? color : "var(--color-text-dim)" }}
                 >
                   {value}
                 </span>
@@ -91,7 +91,7 @@ function ProductionPanel() {
       {/* Add conveyor button — only for admin/supervisor */}
       {canAddConveyor && (
         <div className="mt-auto">
-          <button className="w-full bg-transparent border border-dashed border-[#162035] rounded-xl text-[#2a3a50] text-[8px] tracking-wider py-2 cursor-pointer font-mono hover:border-[#60a5fa44] hover:text-[#60a5fa] transition-colors duration-200">
+          <button className="w-full bg-transparent border border-dashed border-[var(--color-border-card)] rounded-xl text-[var(--color-text-dim)] text-[8px] tracking-wider py-2 cursor-pointer font-mono hover:border-[var(--color-primary)44] hover:text-[var(--color-primary)] transition-colors duration-200">
             + ADD CONVEYOR
           </button>
         </div>

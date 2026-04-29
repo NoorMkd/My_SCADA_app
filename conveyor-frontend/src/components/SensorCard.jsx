@@ -10,17 +10,17 @@
 function SensorCard({ label, value, unit, status }) {
 
   const config = {
-    normal:   { color: "text-[#00e5a0]", dot: "bg-[#00e5a0]", text: "NORMAL"   },
-    warning:  { color: "text-[#fbbf24]", dot: "bg-[#fbbf24]", text: "WARNING"  },
-    critical: { color: "text-[#f87171]", dot: "bg-[#f87171]", text: "CRITICAL" },
+    normal:   { color: "text-[#0098c2]", dot: "bg-[#0098c2]", text: "NORMAL"   },
+    warning:  { color: "text-[#d5a507]", dot: "bg-[#d5a507]", text: "WARNING"  },
+    critical: { color: "text-[#cd6413]", dot: "bg-[#cd6413]", text: "CRITICAL" },
   }
 
   const c = config[status] || config.normal
 
   return (
-    <div className="bg-[#0a1020] border border-[#162035] rounded-xl p-4">
+    <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-xl p-4">
 
-      <p className="text-[#4a6080] font-mono text-[8px] tracking-widest mb-2">
+      <p className="text-[var(--color-text-dim)] font-mono text-[8px] tracking-widest mb-2">
         {label}
       </p>
 

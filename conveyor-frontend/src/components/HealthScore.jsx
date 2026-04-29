@@ -10,9 +10,9 @@ function HealthScore({ score }) {
   const offset = circumference - (score / 100) * circumference  // how much to "hide"
 
   // Color based on score
-  let color = "#00e5a0"    // green = healthy
-  if (score < 40) color = "#f87171"   // red = bad
-  else if (score < 70) color = "#fbbf24"  // amber = warning
+  let color = "#0098c2"    // green = healthy
+  if (score < 40) color = "#cd6413"   // red = bad
+  else if (score < 70) color = "#d5a507"  // amber = warning
 
   const label = score === 0 ? "OFFLINE"
     : score >= 80 ? "HEALTHY"
@@ -20,9 +20,9 @@ function HealthScore({ score }) {
     : "CRITICAL"
 
   return (
-    <div className="bg-[#0a1020] border border-[#162035] rounded-2xl p-5 flex flex-col items-center justify-center h-full">
+    <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl p-5 flex flex-col items-center justify-center h-full">
 
-      <p className="text-[8px] tracking-widest text-[#4a6080] mb-4">MACHINE HEALTH</p>
+      <p className="text-[8px] tracking-widest text-[var(--color-text-dim)] mb-4">MACHINE HEALTH</p>
 
       {/* SVG circle progress */}
       <svg viewBox="0 0 140 140" className="w-36 h-36">
@@ -60,16 +60,16 @@ function HealthScore({ score }) {
       {/* Small legend */}
       <div className="flex gap-3 mt-3">
         <div className="flex items-center gap-1">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#00e5a0]"/>
-          <span className="text-[8px] text-[#4a6080]">HEALTHY ≥80</span>
+          <div className="w-1.5 h-1.5 rounded-full bg-[#0098c2]"/>
+          <span className="text-[8px] text-[var(--color-text-dim)]">HEALTHY ≥80</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#fbbf24]"/>
-          <span className="text-[8px] text-[#4a6080]">WARN ≥60</span>
+          <div className="w-1.5 h-1.5 rounded-full bg-[#d5a507]"/>
+          <span className="text-[8px] text-[var(--color-text-dim)]">WARN ≥60</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#f87171]"/>
-          <span className="text-[8px] text-[#4a6080]">CRITICAL</span>
+          <div className="w-1.5 h-1.5 rounded-full bg-[#cd6413]"/>
+          <span className="text-[8px] text-[var(--color-text-dim)]">CRITICAL</span>
         </div>
       </div>
     </div>

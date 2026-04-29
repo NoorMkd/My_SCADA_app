@@ -52,7 +52,7 @@ function Sidebar() {
   )
 
   return (
-    <div className="w-16 bg-[#0a1020] border-r border-[#162035] flex flex-col items-center py-4 gap-2 flex-shrink-0">
+    <div className="w-16 bg-[var(--color-nav-bg)] border-r border-border-card flex flex-col items-center py-6 gap-3 flex-shrink-0 relative z-10">
 
       {visibleItems.map(item => {
         // Is this the page we're currently on?
@@ -62,20 +62,22 @@ function Sidebar() {
           <button
             key={item.path}
             onClick={() => navigate(item.path)}
-            title={item.label}  // tooltip on hover
+            title={item.label}
             className={`
-              w-10 h-10 rounded-xl flex flex-col items-center justify-center gap-0.5
-              border transition-all duration-200 cursor-pointer
+              w-[3.5rem] h-[3.5rem] flex flex-col items-center justify-center gap-1
+              transition-all duration-150 cursor-pointer
               ${isActive
-                ? "bg-[#071a14] border-[#00e5a044] text-[#00e5a0]"
-                : "bg-transparent border-transparent text-[#2a3a50] hover:text-[#4a6080] hover:bg-[#162035]"
+                ? "bg-[#111d2b] border-l-4 border-l-primary text-white"
+                : "bg-transparent border-l-4 border-l-transparent text-text-muted hover:text-white hover:bg-[#111d2b]"
               }
             `}
           >
             {/* Icon */}
-            <span className="text-sm leading-none">{item.icon}</span>
+            <span className={`text-base leading-none ${isActive ? 'text-primary' : ''}`}>
+              {item.icon}
+            </span>
             {/* Tiny label below icon */}
-            <span className="text-[6px] tracking-wider leading-none">
+            <span className="text-[7px] tracking-[0.2em] font-bold uppercase leading-none mt-1">
               {item.label.slice(0, 4)}
             </span>
           </button>

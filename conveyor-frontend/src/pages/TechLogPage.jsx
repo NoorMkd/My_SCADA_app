@@ -13,21 +13,21 @@ import Sidebar from "../components/Sidebar"
 // Config for each log type — color and symbol
 const TYPE_CONFIG = {
   MAINTENANCE: {
-    color: "#fbbf24",
-    bg: "#18140a",
-    border: "#fbbf2433",
+    color: "#d5a507",
+    bg: "var(--color-bg-base)",
+    border: "#d5a50733",
     symbol: "⚙",
   },
   INSPECTION: {
-    color: "#60a5fa",
+    color: "var(--color-primary)",
     bg: "#0a1320",
-    border: "#60a5fa33",
+    border: "var(--color-primary)33",
     symbol: "◎",
   },
   REPAIR: {
-    color: "#f87171",
-    bg: "#1c0f0f",
-    border: "#f8717133",
+    color: "#cd6413",
+    bg: "var(--color-bg-base)",
+    border: "#cd641333",
     symbol: "✕",
   },
 }
@@ -87,7 +87,7 @@ function TechLogPage() {
     : techLogs.filter(log => log.type === filter)
 
   return (
-    <div className="min-h-screen bg-[#060b14] flex flex-col">
+    <div className="min-h-screen bg-[var(--color-bg-base)] flex flex-col">
 
       <Navbar />
 
@@ -100,10 +100,10 @@ function TechLogPage() {
           {/* ── PAGE HEADER ── */}
           <div className="flex items-center justify-between flex-shrink-0">
             <div>
-              <p className="text-[#fbbf24] font-mono text-[11px] tracking-[3px]">
+              <p className="text-[#d5a507] font-mono text-[11px] tracking-[3px]">
                 ✎ TECHNICIAN LOG
               </p>
-              <p className="text-[#4a6080] font-mono text-[10px] tracking-widest mt-1">
+              <p className="text-[var(--color-text-dim)] font-mono text-[10px] tracking-widest mt-1">
                 {techLogs.length} TOTAL ENTRIES
               </p>
             </div>
@@ -117,13 +117,13 @@ function TechLogPage() {
                   className="font-mono text-[13px] px-3 py-1.5 rounded-full border transition-all duration-200"
                   style={{
                     borderColor: filter === f
-                      ? (TYPE_CONFIG[f]?.border?.replace("33","88") || "#fbbf2488")
-                      : "#162035",
+                      ? (TYPE_CONFIG[f]?.border?.replace("33","88") || "#d5a50788")
+                      : "var(--color-border-card)",
                     color: filter === f
-                      ? (TYPE_CONFIG[f]?.color || "#fbbf24")
-                      : "#4a6080",
+                      ? (TYPE_CONFIG[f]?.color || "#d5a507")
+                      : "var(--color-text-dim)",
                     background: filter === f
-                      ? (TYPE_CONFIG[f]?.bg || "#18140a")
+                      ? (TYPE_CONFIG[f]?.bg || "var(--color-bg-base)")
                       : "transparent",
                   }}
                 >
@@ -135,9 +135,9 @@ function TechLogPage() {
 
           {/* ── WRITE NEW ENTRY (only if allowed) ── */}
           {canWrite && (
-            <div className="bg-[#0a1020] border border-[#162035] rounded-2xl p-4 flex-shrink-0">
+            <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl p-4 flex-shrink-0">
 
-              <p className="text-[13px] tracking-widest text-[#4a6080] mb-3">
+              <p className="text-[13px] tracking-widest text-[var(--color-text-dim)] mb-3">
                 NEW ENTRY
               </p>
 
@@ -148,7 +148,7 @@ function TechLogPage() {
                 <select
                   value={selectedConveyor}
                   onChange={e => setSelectedConveyor(e.target.value)}
-                  className="flex-1 bg-[#060b14] border border-[#162035] rounded-lg text-[#94a3b8] font-mono text-[13px] px-3 py-2 focus:outline-none focus:border-[#fbbf2444]"
+                  className="flex-1 bg-[var(--color-bg-base)] border border-[var(--color-border-card)] rounded-lg text-[#94a3b8] font-mono text-[13px] px-3 py-2 focus:outline-none focus:border-[#d5a50744]"
                 >
                   {conveyors.map(cv => (
                     <option key={cv.id} value={cv.name}>
@@ -161,7 +161,7 @@ function TechLogPage() {
                 <select
                   value={selectedType}
                   onChange={e => setSelectedType(e.target.value)}
-                  className="bg-[#060b14] border border-[#162035] rounded-lg font-mono text-[13px] px-3 py-2 focus:outline-none focus:border-[#fbbf2444]"
+                  className="bg-[var(--color-bg-base)] border border-[var(--color-border-card)] rounded-lg font-mono text-[13px] px-3 py-2 focus:outline-none focus:border-[#d5a50744]"
                   style={{ color: TYPE_CONFIG[selectedType]?.color }}
                 >
                   <option value="MAINTENANCE">MAINTENANCE</option>
@@ -176,14 +176,14 @@ function TechLogPage() {
                 onChange={e => setText(e.target.value)}
                 placeholder="Describe what was done, parts replaced, observations, measurements..."
                 rows={3}
-                className="w-full bg-[#060b14] border border-[#162035] rounded-lg text-[#94a3b8] font-mono text-[13px] px-3 py-2.5 resize-none focus:outline-none focus:border-[#fbbf2444] leading-relaxed"
+                className="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-card)] rounded-lg text-[#94a3b8] font-mono text-[13px] px-3 py-2.5 resize-none focus:outline-none focus:border-[#d5a50744] leading-relaxed"
               />
 
               {/* Bottom row: hint + submit */}
               <div className="flex items-center justify-between mt-3">
-                <p className="text-[13px] text-[#2a3a50] tracking-wider">
+                <p className="text-[13px] text-[var(--color-text-dim)] tracking-wider">
                   Signed as{" "}
-                  <span className="text-[#4a6080]">{user?.username}</span>
+                  <span className="text-[var(--color-text-dim)]">{user?.username}</span>
                   {" "}· Timestamp added automatically
                 </p>
 
@@ -192,8 +192,8 @@ function TechLogPage() {
                   disabled={!text.trim()}
                   className={`font-mono text-[13px] px-5 py-2 rounded-lg border tracking-wider transition-all duration-200
                     ${text.trim()
-                      ? "text-[#fbbf24] border-[#fbbf2444] bg-[#18140a] hover:bg-[#fbbf2411] cursor-pointer active:scale-95"
-                      : "text-[#2a3a50] border-[#162035] cursor-not-allowed"
+                      ? "text-[#d5a507] border-[#d5a50744] bg-[var(--color-bg-base)] hover:bg-[#d5a50711] cursor-pointer active:scale-95"
+                      : "text-[var(--color-text-dim)] border-[var(--color-border-card)] cursor-not-allowed"
                     }`}
                 >
                   {/* Show checkmark flash when submitted */}
@@ -208,8 +208,8 @@ function TechLogPage() {
 
             {filteredLogs.length === 0 ? (
               // No entries found for this filter
-              <div className="bg-[#0a1020] border border-[#162035] rounded-2xl p-8 text-center">
-                <p className="text-[#4a6080] font-mono text-[10px] tracking-widest">
+              <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl p-8 text-center">
+                <p className="text-[var(--color-text-dim)] font-mono text-[10px] tracking-widest">
                   NO ENTRIES FOUND
                 </p>
               </div>
@@ -220,7 +220,7 @@ function TechLogPage() {
                 return (
                   <div
                     key={log.id}
-                    className="bg-[#0a1020] rounded-2xl p-4 grid gap-3"
+                    className="bg-[var(--color-bg-card)] rounded-2xl p-4 grid gap-3"
                     style={{
                       border: `1px solid ${cfg.border}`,
                       gridTemplateColumns: "auto 1fr auto"
@@ -251,9 +251,9 @@ function TechLogPage() {
                         <span
                           className="text-[10px] px-2 py-0.5 rounded-full border font-mono"
                           style={{
-                            color: "#00e5a0",
-                            borderColor: "#00e5a033",
-                            background: "#071a14"
+                            color: "#0098c2",
+                            borderColor: "#0098c233",
+                            background: "var(--color-bg-base)"
                           }}
                         >
                           {log.conveyor}
@@ -280,7 +280,7 @@ function TechLogPage() {
 
                     {/* Timestamp */}
                     <div className="text-right flex-shrink-0">
-                      <p className="text-[#4a6080] font-mono text-[8px] tracking-wider">
+                      <p className="text-[var(--color-text-dim)] font-mono text-[8px] tracking-wider">
                         {formatTime(log.timestamp)}
                       </p>
                       <p className="text-[#1e2d45] font-mono text-[7px] mt-0.5">
