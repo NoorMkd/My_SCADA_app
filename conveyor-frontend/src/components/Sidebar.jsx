@@ -52,7 +52,7 @@ function Sidebar() {
   )
 
   return (
-    <div className="w-16 bg-[var(--color-nav-bg)] border-r border-border-card flex flex-col items-center py-6 gap-3 flex-shrink-0 relative z-10">
+    <div className="w-full md:w-16 bg-[var(--color-nav-bg)] border-b md:border-b-0 md:border-r border-border-card flex flex-row md:flex-col items-center justify-center md:justify-start py-2 md:py-6 gap-2 md:gap-3 flex-shrink-0 relative z-10 overflow-x-auto">
 
       {visibleItems.map(item => {
         // Is this the page we're currently on?
@@ -65,10 +65,10 @@ function Sidebar() {
             title={item.label}
             className={`
               w-[3.5rem] h-[3.5rem] flex flex-col items-center justify-center gap-1
-              transition-all duration-150 cursor-pointer
+              transition-all duration-150 cursor-pointer shrink-0
               ${isActive
-                ? "bg-[#111d2b] border-l-4 border-l-primary text-white"
-                : "bg-transparent border-l-4 border-l-transparent text-text-muted hover:text-white hover:bg-[#111d2b]"
+                ? "bg-[#111d2b] md:border-l-4 md:border-b-0 border-b-4 border-primary text-white"
+                : "bg-transparent md:border-l-4 md:border-b-0 border-b-4 border-transparent text-text-muted hover:text-white hover:bg-[#111d2b]"
               }
             `}
           >

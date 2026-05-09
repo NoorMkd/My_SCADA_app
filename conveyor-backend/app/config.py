@@ -36,8 +36,8 @@ class Settings(BaseSettings):
 
     # --- Sensor Alert Thresholds ---
     # If temperature goes above these → create an alert
-    TEMP_WARNING: float = 65.0   # °C
-    TEMP_CRITICAL: float = 75.0  # °C
+    TEMP_WARNING: float = 30.0   # °C
+    TEMP_CRITICAL: float = 31.5  # °C
 
     # If current goes above these → create an alert
     CURRENT_WARNING: float = 14.0  # Amperes

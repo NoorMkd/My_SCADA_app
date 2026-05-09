@@ -25,7 +25,7 @@ class SensorPayload(BaseModel):
     One message from the ESP32.
     Arrives every 5 seconds via MQTT.
     """
-    timestamp: str
+    timestamp: Optional[str] = None
     speed: float
     current: float
     temperature: float

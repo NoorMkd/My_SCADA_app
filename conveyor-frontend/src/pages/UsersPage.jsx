@@ -12,7 +12,7 @@ function UsersPage() {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem("access_token") || user?.token;
-      const response = await fetch("http://localhost:8000/api/auth/users", {
+      const response = await fetch(`/api/auth/users`, {
         headers: {
           "Authorization": `Bearer ${token}`
         }
@@ -93,12 +93,12 @@ function UsersPage() {
     <div className="min-h-screen bg-[var(--color-bg-base)] flex flex-col">
       <Navbar />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
         <Sidebar />
 
         <div className="flex-1 p-4 flex flex-col gap-4 overflow-auto">
           {/* ── HEADER ── */}
-          <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl px-5 py-4 flex items-center justify-between flex-shrink-0">
+          <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0 flex-shrink-0">
             <div>
               <p className="text-[var(--color-primary)] font-mono text-[12px] tracking-[3px] font-bold">
                 ◈ MANAGE USERS
@@ -117,10 +117,10 @@ function UsersPage() {
           </div>
 
           {/* ── MAIN CONTENT ── */}
-          <div className="flex gap-4 items-start">
+          <div className="flex flex-col md:flex-row gap-4 items-start">
             
             {/* Users List */}
-            <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl flex-1 flex flex-col overflow-hidden">
+            <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl flex-1 flex flex-col overflow-hidden w-full">
               <div className="p-5 border-b border-[var(--color-border-card)]">
                 <p className="text-[#94a3b8] font-mono text-[12px] tracking-[3px]">
                   REGISTERED USERS
@@ -128,7 +128,7 @@ function UsersPage() {
               </div>
 
               {/* Table Header */}
-              <div className="grid grid-cols-4 gap-4 px-5 py-3 border-b border-[var(--color-border-card)] bg-[var(--color-bg-base)]">
+              <div className="hidden md:grid grid-cols-4 gap-4 px-5 py-3 border-b border-[var(--color-border-card)] bg-[var(--color-bg-base)]">
                 <div className="text-[#94a3b8] text-[10px] font-mono tracking-widest">ID</div>
                 <div className="text-[#94a3b8] text-[10px] font-mono tracking-widest">USERNAME</div>
                 <div className="text-[#94a3b8] text-[10px] font-mono tracking-widest">ROLE</div>
@@ -136,20 +136,28 @@ function UsersPage() {
               </div>
 
               {/* Table Body */}
-              <div className="flex-1 overflow-auto p-5 space-y-4 min-h-[300px]">
+              <div className="flex-1 overflow-auto p-5 space-y-6 md:space-y-4 min-h-[300px]">
                 {usersList.map((u, index) => (
-                  <div key={u.id} className="grid grid-cols-4 gap-4 items-center border-b border-[var(--color-border-card)] pb-4 last:border-0 last:pb-0">
-                    <div className="text-[#64748b] font-mono text-[10px]">#{index + 1}</div>
-                    
-                    <div className="text-[#f8fafc] font-mono text-[12px] flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-md flex justify-center items-center bg-[var(--color-border-card)] text-[10px] text-[var(--color-primary)]">
-                        👤
-                      </span>
-                      {u.username}
+                  <div key={u.id} className="flex flex-col gap-2 md:grid md:grid-cols-4 md:gap-4 md:items-center border-b border-[var(--color-border-card)] pb-4 last:border-0 last:pb-0">
+                    <div className="flex justify-between md:block">
+                      <span className="md:hidden text-[#94a3b8] text-[10px] font-mono tracking-widest">ID</span>
+                      <div className="text-[#64748b] font-mono text-[10px]">#{index + 1}</div>
                     </div>
                     
-                    <div>
-                      <span className="px-2 py-0.5 rounded-full border text-[9px] font-mono uppercase tracking-widest"
+                    <div className="flex justify-between md:block items-center">
+                      <span className="md:hidden text-[#94a3b8] text-[10px] font-mono tracking-widest">USERNAME</span>
+                      <div className="text-[#f8fafc] font-mono text-[12px] flex items-center justify-end md:justify-start gap-2">
+                        <span className="hidden md:flex w-6 h-6 rounded-md justify-center items-center bg-[var(--color-border-card)] text-[10px] text-[var(--color-primary)]">
+                          👤
+                        </span>
+                        {u.username}
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-between md:block items-center">
+                      <span className="md:hidden text-[#94a3b8] text-[10px] font-mono tracking-widest">ROLE</span>
+                      <div>
+                        <span className="px-2 py-0.5 rounded-full border text-[9px] font-mono uppercase tracking-widest"
                         style={{
                           color: u.role === "admin" ? "#cd6413" :
                                  u.role === "supervisor" ? "#d5a507" :
@@ -165,11 +173,12 @@ function UsersPage() {
                         {u.role}
                       </span>
                     </div>
+                    </div>
 
-                    <div className="flex justify-end">
+                    <div className="flex justify-end md:justify-end mt-2 md:mt-0">
                       <button
                         onClick={() => handleDelete(u.id, u.username)}
-                        className="text-[#cd6413] hover:bg-[#cd641322] px-3 py-1.5 rounded-lg transition-colors font-mono text-[12px] tracking-widest border border-transparent hover:border-[#cd641344]"
+                        className="text-[#cd6413] hover:bg-[#cd641322] px-3 py-1.5 rounded-lg transition-colors font-mono text-[12px] tracking-widest border border-transparent hover:border-[#cd641344] w-full md:w-auto mt-2 md:mt-0 border-[#cd641311]"
                       >
                         DELETE
                       </button>
@@ -184,7 +193,7 @@ function UsersPage() {
 
             {/* Add User Form Sidebar */}
             {showAddForm && (
-              <div className="w-[320px] bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl p-5 flex-shrink-0 transition-all">
+              <div className="w-full md:w-[320px] bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl p-5 flex-shrink-0 transition-all">
                 <p className="text-[#94a3b8] font-mono text-[11px] tracking-[3px] mb-5">
                   NEW USER DETAILS
                 </p>

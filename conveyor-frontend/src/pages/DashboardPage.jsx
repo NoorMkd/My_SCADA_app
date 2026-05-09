@@ -40,7 +40,11 @@ function DashboardPage() {
   const canControl = ["admin", "supervisor", "operator"].includes(user?.role)
 
   // Get alerts and health for the selected conveyor
-  const alerts      = cv ? getAlerts(cv)       : []
+  const { alertsHistory } = useMachine()
+  
+  // Use live calculation for instant dynamic alerts on the dashboard
+  const alerts = cv ? getAlerts(cv) : []
+
   const healthScore = cv ? getHealthScore(cv)  : 0
   const runtime     = cv ? formatRuntime(cv.runtimeSeconds) : "00:00:00"
 
@@ -71,14 +75,16 @@ function DashboardPage() {
       <Navbar />
        
       {/* ── MAIN BODY: left content + right panel ── */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
 
           <Sidebar />
         {/* ── LEFT/CENTER: everything except the sidebar ── */}
-        <div className="flex-1 flex flex-col p-3 gap-3 overflow-auto">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+          
+          <div className="flex-1 flex flex-col p-3 gap-3 overflow-auto">
 
-          {/* ══ ROW 1: 3 Gauges + Items Counter ══ */}
-          <div className="grid grid-cols-4 gap-3 flex-shrink-0">
+            {/* ══ ROW 1: 3 Gauges + Items Counter ══ */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 flex-shrink-0">
 
             {/* Temperature gauge */}
             <GaugeCard
@@ -86,8 +92,8 @@ function DashboardPage() {
               value={cv.sensors.temperature}
               max={90}
               unit="°C"
-              warnAt={0.72}   // warn at 65°C
-              critAt={0.84}   // critical at 75°C
+              warnAt={30 / 90}   // warn at 30°C
+              critAt={31.5 / 90} // critical at 31.5°C
               offline={offline}
             />
 
@@ -122,7 +128,7 @@ function DashboardPage() {
           </div>
 
           {/* ══ LOWER AREA: keep Location on right-top, move Health/Controls/Alerts on left side ══ */}
-          <div className="grid grid-cols-3 lg:grid-cols-[1fr_1.15fr_1fr] gap-3 flex-shrink-0 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1.15fr_1fr] gap-3 flex-shrink-0 items-stretch">
 
             {/* ── MACHINE HEALTH (left-top) ── */}
             <HealthScore score={healthScore} />
@@ -200,17 +206,17 @@ function DashboardPage() {
               </div>
 
               {/* ── ALERTS (exactly under machine controls) ── */}
-              <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl p-4 flex-[2] min-h-[160px]">
-                <p className="text-[15px] tracking-widest text-[var(--color-text-dim)] mb-3">
-                  ALERTS —{" "}
+              <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl p-4 flex-[2] min-h-[160px] overflow-auto">
+                <p className="text-[12px] tracking-widest text-[var(--color-text-dim)] mb-3">
+                  LIVE SENSOR ALERTS —{" "}
                   <span className="text-[#94a3b8]">{cv.name.toUpperCase()}</span>
                 </p>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-col gap-2">
                   {/* No alerts → show all clear */}
                   {alerts.length === 0 ? (
                     <span
-                      className="font-mono text-[15px] px-3 py-1.5 rounded-lg border"
+                      className="font-mono text-[12px] px-3 py-1.5 rounded-lg border w-fit"
                       style={{
                         color: "#0098c2",
                         borderColor: "#0098c233",
@@ -226,7 +232,7 @@ function DashboardPage() {
                       return (
                         <span
                           key={i}
-                          className="font-mono text-[10px] px-3 py-1.5 rounded-lg border"
+                          className="font-mono text-[11px] px-3 py-1.5 rounded-lg border w-full truncate"
                           style={{
                             color: s.text,
                             borderColor: s.border,
@@ -249,8 +255,10 @@ function DashboardPage() {
         </div>
 
         {/* ── RIGHT: Production Panel sidebar ── */}
-        <div className="w-44 flex-shrink-0">
+        <div className="w-full lg:w-44 flex-shrink-0 border-t border-border-card lg:border-t-0 p-3 lg:p-0">
           <ProductionPanel />
+        </div>
+        
         </div>
 
       </div>

@@ -165,13 +165,45 @@ function HistoryPage() {
   const fetchEventLogs = async () => {
     try {
       const token = localStorage.getItem("access_token")
-      const res = await fetch(`http://localhost:8000/api/techlogs?conveyor_id=${selectedId}`, {
+      
+      // Fetch tech logs
+      const techRes = await fetch(`/api/techlogs?conveyor_id=${selectedId}`, {
         headers: { "Authorization": `Bearer ${token}` }
       })
-      if (res.ok) {
-        const data = await res.json()
-        setEventLogs(data)
-      }
+      const techData = techRes.ok ? await techRes.json() : []
+
+      // Fetch alerts (so we can mix critical ones into history)
+      const alertRes = await fetch(`/api/alerts`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+      const alertData = alertRes.ok ? await alertRes.json() : []
+
+      // Format tech data
+      const formattedLogs = techData.map(log => ({
+        id: `tech-${log.id}`,
+        timestamp: log.timestamp,
+        type: log.intervention_type || "LOG",
+        text: log.description,
+        author: log.author
+      }))
+
+      // Format critical alerts and add to the list
+      const criticalAlerts = alertData
+        .filter(a => a.level === "critical" && a.conveyor_id === selectedId)
+        .map(a => ({
+          id: `alert-${a.id}`,
+          timestamp: a.timestamp,
+          type: "CRITICAL ALERT",
+          text: a.message,
+          author: "System (Auto)"
+        }))
+
+      // Combine both, and sort by newest first
+      const combined = [...formattedLogs, ...criticalAlerts].sort(
+        (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+      )
+
+      setEventLogs(combined)
     } catch (e) {
       console.error("Failed to fetch event logs:", e)
     }
@@ -223,14 +255,14 @@ function HistoryPage() {
     <div className="min-h-screen bg-[var(--color-bg-base)] flex flex-col">
       <Navbar />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
         <Sidebar />
 
-        <div className="flex-1 p-4 flex flex-col gap-4 overflow-auto">
+        <div className="flex-1 p-2 md:p-4 flex flex-col gap-4 overflow-auto">
 
           {/* ── HEADER ── */}
-          <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl px-5 py-4 flex items-center justify-between flex-shrink-0">
-            <div>
+          <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl px-5 py-4 flex flex-col md:flex-row items-center justify-between gap-4 flex-shrink-0">
+            <div className="w-full md:w-auto text-center md:text-left">
               <p className="text-[var(--color-primary)] font-mono text-[12px] tracking-[3px] font-bold">
                 ◈ HISTORY & AI PREDICTIONS
               </p>
@@ -240,7 +272,7 @@ function HistoryPage() {
             </div>
 
             {/* Conveyor selector tabs */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap justify-center">
               {conveyors.map(c => (
                 <button
                   key={c.id}
@@ -276,10 +308,10 @@ function HistoryPage() {
           </div>
 
           {/* ── MAIN CONTENT: left + right ── */}
-          <div className="grid gap-4 flex-1 min-h-0" style={{ gridTemplateColumns: "1.8fr 1.2fr" }}>
+          <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
 
             {/* ── LEFT: Event History (No Filters) ── */}
-            <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl flex flex-col overflow-hidden">
+            <div className="flex-1 lg:flex-[1.8] bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl flex flex-col overflow-hidden">
               <div className="p-5 border-b border-[var(--color-border-card)]">
                 <p className="text-[#94a3b8] font-mono text-[12px] tracking-[3px]">
                   ◈ EVENT HISTORY
@@ -287,7 +319,7 @@ function HistoryPage() {
               </div>
 
               {/* Table Header */}
-              <div className="grid grid-cols-5 gap-4 px-5 py-3 border-b border-[var(--color-border-card)] bg-[var(--color-bg-base)]">
+              <div className="hidden md:grid grid-cols-5 gap-4 px-5 py-3 border-b border-[var(--color-border-card)] bg-[var(--color-bg-base)]">
                 <div className="text-[#94a3b8] text-[10px] font-mono tracking-widest">DATE / TIME</div>
                 <div className="text-[#94a3b8] text-[10px] font-mono tracking-widest">TYPE</div>
                 <div className="text-[#94a3b8] text-[10px] font-mono tracking-widest">DESCRIPTION</div>
@@ -296,7 +328,7 @@ function HistoryPage() {
               </div>
 
               {/* Table Body */}
-              <div className="flex-1 overflow-auto p-5 space-y-4">
+              <div className="flex-1 overflow-auto p-2 md:p-5 space-y-4">
                 {eventLogs.length === 0 ? (
                   <div className="text-center py-10">
                     <p className="text-[var(--color-text-dim)] font-mono text-[10px] tracking-widest">
@@ -310,12 +342,15 @@ function HistoryPage() {
                     const timeStr = dateObj.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
                     
                     return (
-                      <div key={log.id} className="grid grid-cols-5 gap-4 items-center border-b border-[var(--color-border-card)] pb-4">
-                        <div className="text-[12px] font-mono">
-                          <p className="text-[#94a3b8]">{dateStr}</p>
-                          <p className="text-[var(--color-text-dim)] mt-1">{timeStr}</p>
+                      <div key={log.id} className="flex flex-col md:grid md:grid-cols-5 gap-2 md:gap-4 md:items-center border-b border-[var(--color-border-card)] pb-4">
+                        <div className="text-[12px] font-mono flex justify-between md:block">
+                          <span className="md:hidden text-[#94a3b8] tracking-widest text-[10px]">TIME:</span>
+                          <div>
+                            <p className="text-[#94a3b8]">{dateStr}</p>
+                            <p className="text-[var(--color-text-dim)] mt-1">{timeStr}</p>
+                          </div>
                         </div>
-                        <div className="text-[#cbd5e1] font-mono text-[11px]">{log.type}</div>
+                        <div className={`font-mono text-[11px] ${log.type === "CRITICAL ALERT" ? "text-[var(--color-danger)]" : "text-[#cbd5e1]"}`}>{log.type}</div>
                         <div className="text-[#94a3b8] text-[12px] pr-4">{log.text}</div>
                         <div className="text-[var(--color-text-dim)] font-mono text-[11px]">—</div>
                         <div className="text-[var(--color-text-dim)] font-mono text-[11px]">Logged by {log.author}</div>
@@ -327,7 +362,7 @@ function HistoryPage() {
             </div>
 
             {/* ── RIGHT: AI Panel & Charts ── */}
-            <div className="flex flex-col gap-4 overflow-auto pb-4 pr-1">
+            <div className="flex-1 lg:flex-[1.2] flex flex-col gap-4 overflow-auto pb-4 pr-1">
 
               {/* AI Header */}
               <div className="bg-[var(--color-bg-card)] max-w-full panel-border border-[var(--color-border-card)] p-4 flex-shrink-0 flex items-center justify-between shadow-sm">

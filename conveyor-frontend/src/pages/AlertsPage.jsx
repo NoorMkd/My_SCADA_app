@@ -83,13 +83,13 @@ function AlertsPage() {
 
       <Navbar />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
         <Sidebar />
 
         <div className="flex-1 p-4 flex flex-col gap-4 overflow-auto">
 
           {/* ── PAGE HEADER ── */}
-          <div className="flex items-center justify-between flex-shrink-0">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0 flex-shrink-0">
             <div>
               <p className="text-[#cd6413] font-mono text-[11px] tracking-[3px]">
                 ◎ ALERTS LOG
@@ -100,7 +100,7 @@ function AlertsPage() {
             </div>
 
             {/* Filter tabs */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {["ALL", "CRITICAL", "WARNING", "RESOLVED"].map(f => {
                 const isActive = filter === f
                 const cfg = LEVEL_CONFIG[f.toLowerCase()]
@@ -123,7 +123,7 @@ function AlertsPage() {
           </div>
 
           {/* ── STATS CARDS ── */}
-          <div className="grid grid-cols-4 gap-3 flex-shrink-0">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 flex-shrink-0">
             {[
               { label: "TOTAL ALERTS", value: totalCount,    color: "#94a3b8" },
               { label: "CRITICAL",     value: criticalCount, color: "#cd6413" },
@@ -163,38 +163,52 @@ function AlertsPage() {
                 return (
                   <div
                     key={alert.id}
-                    className="bg-[var(--color-bg-card)] rounded-2xl px-4 py-3 flex items-center gap-3"
+                    className="bg-[var(--color-bg-card)] rounded-2xl px-4 py-3 flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3"
                     style={{
                       border: `1px solid ${cfg.border}`,
                       opacity: alert.resolved ? 0.7 : 1,
                     }}
                   >
-                    {/* Colored dot */}
-                    <div
-                      className="w-2 h-2 rounded-full flex-shrink-0"
-                      style={{ background: cfg.dot }}
-                    />
+                    <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
+                      {/* Colored dot */}
+                      <div
+                        className="w-2 h-2 rounded-full flex-shrink-0"
+                        style={{ background: cfg.dot }}
+                      />
 
-                    {/* Conveyor badge */}
-                    <span
-                      className="font-mono text-[12px] px-2 py-0.5 rounded-full border flex-shrink-0"
-                      style={{
-                        color: "#0098c2",
-                        borderColor: "#0098c233",
-                        background: "var(--color-bg-base)",
-                      }}
-                    >
-                      {alert.conveyor}
-                    </span>
+                      {/* Conveyor badge */}
+                      <span
+                        className="font-mono text-[12px] px-2 py-0.5 rounded-full border flex-shrink-0"
+                        style={{
+                          color: "#0098c2",
+                          borderColor: "#0098c233",
+                          background: "var(--color-bg-base)",
+                        }}
+                      >
+                        {alert.conveyor}
+                      </span>
+                      
+                      {/* Level badge (Mobile: moved up for space efficiency) */}
+                      <span
+                        className="md:hidden font-mono text-[8px] px-2 py-0.5 rounded-full border ml-auto flex-shrink-0"
+                        style={{
+                          color: cfg.color,
+                          borderColor: cfg.border,
+                          background: cfg.bg,
+                        }}
+                      >
+                        {cfg.label}
+                      </span>
+                    </div>
 
                     {/* Alert message */}
-                    <span className="flex-1 font-mono text-[12px] text-[#cbd5e1]">
+                    <span className="flex-1 font-mono text-[12px] text-[#cbd5e1] mt-1 md:mt-0">
                       {alert.message}
                     </span>
 
-                    {/* Level badge */}
+                    {/* Level badge (Desktop) */}
                     <span
-                      className="font-mono text-[8px] px-2 py-0.5 rounded-full border flex-shrink-0"
+                      className="hidden md:inline-block font-mono text-[8px] px-2 py-0.5 rounded-full border flex-shrink-0"
                       style={{
                         color: cfg.color,
                         borderColor: cfg.border,
@@ -204,26 +218,27 @@ function AlertsPage() {
                       {cfg.label}
                     </span>
 
-                    {/* Timestamp */}
-                    <div className="text-right flex-shrink-0 min-w-[70px]">
-                      <p className="text-[var(--color-text-dim)] font-mono text-[10px]">
-                        {formatTime(alert.timestamp)}
-                      </p>
-                      <p className="text-[#1e2d45] font-mono text-[10px] mt-0.5">
-                        {formatDate(alert.timestamp)}
-                      </p>
+                    <div className="flex items-center justify-between w-full md:w-auto mt-2 md:mt-0">
+                      {/* Timestamp */}
+                      <div className="text-left md:text-right flex-shrink-0 min-w-[70px]">
+                        <p className="text-[var(--color-text-dim)] font-mono text-[10px]">
+                          {formatTime(alert.timestamp)}
+                        </p>
+                        <p className="text-[#1e2d45] font-mono text-[10px] mt-0.5">
+                          {formatDate(alert.timestamp)}
+                        </p>
+                      </div>
+
+                      {/* Resolve button — only admin/supervisor, only if not resolved */}
+                      {canResolve && !alert.resolved && (
+                        <button
+                          onClick={() => resolveAlert(alert.id)}
+                          className="font-mono text-[12px] px-2 py-1 rounded-lg border border-[var(--color-border-card)] text-[var(--color-text-dim)] hover:border-[#0098c233] hover:text-[#0098c2] transition-colors duration-200 flex-shrink-0 ml-4 md:ml-0"
+                        >
+                          ✓ RESOLVE
+                        </button>
+                      )}
                     </div>
-
-                    {/* Resolve button — only admin/supervisor, only if not resolved */}
-                    {canResolve && !alert.resolved && (
-                      <button
-                        onClick={() => resolveAlert(alert.id)}
-                        className="font-mono text-[12px] px-2 py-1 rounded-lg border border-[var(--color-border-card)] text-[var(--color-text-dim)] hover:border-[#0098c233] hover:text-[#0098c2] transition-colors duration-200 flex-shrink-0"
-                      >
-                        ✓ RESOLVE
-                      </button>
-                    )}
-
                   </div>
                 )
               })

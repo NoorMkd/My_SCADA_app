@@ -44,7 +44,7 @@ export function AuthProvider({ children }) {
       formData.append("password", password)
 
       // 1. Call real backend
-      const response = await fetch("http://localhost:8000/api/auth/login", {
+      const response = await fetch(`/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -86,7 +86,7 @@ export function AuthProvider({ children }) {
   async function addUser(newUser) {
     try {
       const token = localStorage.getItem("access_token") || user?.token;
-      const response = await fetch("http://localhost:8000/api/auth/register", {
+      const response = await fetch(`/api/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -109,7 +109,7 @@ export function AuthProvider({ children }) {
   async function deleteUser(id) {
     try {
       const token = localStorage.getItem("access_token") || user?.token;
-      const response = await fetch(`http://localhost:8000/api/auth/users/${id}`, {
+      const response = await fetch(`/api/auth/users/${id}`, {
         method: "DELETE",
         headers: {
           "Authorization": `Bearer ${token}`

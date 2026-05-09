@@ -91,14 +91,14 @@ function TechLogPage() {
 
       <Navbar />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
         <Sidebar />
 
         {/* Main content area */}
         <div className="flex-1 p-4 flex flex-col gap-4 overflow-auto">
 
           {/* ── PAGE HEADER ── */}
-          <div className="flex items-center justify-between flex-shrink-0">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0 flex-shrink-0">
             <div>
               <p className="text-[#d5a507] font-mono text-[11px] tracking-[3px]">
                 ✎ TECHNICIAN LOG
@@ -109,7 +109,7 @@ function TechLogPage() {
             </div>
 
             {/* Filter tabs */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {["ALL", "MAINTENANCE", "INSPECTION", "REPAIR"].map(f => (
                 <button
                   key={f}
@@ -142,7 +142,7 @@ function TechLogPage() {
               </p>
 
               {/* Conveyor + Type selectors */}
-              <div className="flex gap-3 mb-3">
+              <div className="flex flex-col md:flex-row gap-3 mb-3">
 
                 {/* Which conveyor? */}
                 <select
@@ -180,7 +180,7 @@ function TechLogPage() {
               />
 
               {/* Bottom row: hint + submit */}
-              <div className="flex items-center justify-between mt-3">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0 mt-3">
                 <p className="text-[13px] text-[var(--color-text-dim)] tracking-wider">
                   Signed as{" "}
                   <span className="text-[var(--color-text-dim)]">{user?.username}</span>
@@ -220,10 +220,9 @@ function TechLogPage() {
                 return (
                   <div
                     key={log.id}
-                    className="bg-[var(--color-bg-card)] rounded-2xl p-4 grid gap-3"
+                    className="bg-[var(--color-bg-card)] rounded-2xl p-4 flex flex-col md:grid md:grid-cols-[auto_1fr_auto] gap-3"
                     style={{
-                      border: `1px solid ${cfg.border}`,
-                      gridTemplateColumns: "auto 1fr auto"
+                      border: `1px solid ${cfg.border}`
                     }}
                   >
                     {/* Type icon box */}
@@ -279,7 +278,7 @@ function TechLogPage() {
                     </div>
 
                     {/* Timestamp */}
-                    <div className="text-right flex-shrink-0">
+                    <div className="text-left md:text-right flex-shrink-0 mt-2 md:mt-0">
                       <p className="text-[var(--color-text-dim)] font-mono text-[8px] tracking-wider">
                         {formatTime(log.timestamp)}
                       </p>

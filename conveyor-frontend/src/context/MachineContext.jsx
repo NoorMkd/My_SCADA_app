@@ -21,6 +21,7 @@ export function MachineProvider({ children }) {
       isRunning: false,
       speed: 0,
       sensors: { temperature: 0, current: 0 },
+      fault: null,
       itemsToday: 0,
       dailyTarget: 300,
       runtimeSeconds: 0,
@@ -35,6 +36,7 @@ export function MachineProvider({ children }) {
       isRunning: false,
       speed: 0,
       sensors: { temperature: 0, current: 0 },
+      fault: null,
       itemsToday: 74,
       dailyTarget: 300,
       runtimeSeconds: 0,
@@ -49,6 +51,7 @@ export function MachineProvider({ children }) {
       isRunning: true,
       speed: 70,
       sensors: { temperature: 78, current: 16 },
+      fault: null,
       itemsToday: 201,
       dailyTarget: 300,
       runtimeSeconds: 26043, // 07:14:03
@@ -60,7 +63,7 @@ export function MachineProvider({ children }) {
 
   // Thresholds — if sensor goes above these → alert
   const THRESHOLDS = {
-    temperature: { warning: 65, critical: 75 },
+    temperature: { warning: 30, critical: 31.5 },
     current:     { warning: 14, critical: 18 },
   }
 
@@ -109,6 +112,12 @@ export function MachineProvider({ children }) {
       alerts.push({ msg: "Machine offline — not started", level: "info" })
       return alerts
     }
+    
+    // Add real hardware fault if ESP32 sent one
+    if (conveyor.fault) {
+      alerts.push({ msg: `Hardware Fault: ${conveyor.fault}`, level: "critical" })
+    }
+
     const { temperature, current } = conveyor.sensors
     if (temperature >= THRESHOLDS.temperature.critical)
       alerts.push({ msg: `High Temp: ${temperature}°C (limit ${THRESHOLDS.temperature.critical}°C)`, level: "critical" })
@@ -129,11 +138,22 @@ export function MachineProvider({ children }) {
     if (!conveyor.isRunning) return 0
     const { temperature, current } = conveyor.sensors
 
-    // How far is each sensor from its critical limit? (as %)
-    const tempScore    = Math.max(0, 100 - (temperature / THRESHOLDS.temperature.critical) * 100)
-    const currentScore = Math.max(0, 100 - (current / THRESHOLDS.current.critical) * 100)
+    let tempScore = 100
+    if (temperature >= THRESHOLDS.temperature.critical) tempScore = 0
+    else if (temperature > THRESHOLDS.temperature.warning) {
+      const range = THRESHOLDS.temperature.critical - THRESHOLDS.temperature.warning
+      const over = temperature - THRESHOLDS.temperature.warning
+      tempScore = 100 - (over / range) * 100
+    }
 
-    // Average of both scores, rounded
+    let currentScore = 100
+    if (current >= THRESHOLDS.current.critical) currentScore = 0
+    else if (current > THRESHOLDS.current.warning) {
+      const range = THRESHOLDS.current.critical - THRESHOLDS.current.warning
+      const over = current - THRESHOLDS.current.warning
+      currentScore = 100 - (over / range) * 100
+    }
+
     return Math.round((tempScore + currentScore) / 2)
   }
 
@@ -153,7 +173,7 @@ export function MachineProvider({ children }) {
   const fetchTechLogs = async () => {
     try {
       const token = localStorage.getItem("access_token")
-      const res = await fetch("http://localhost:8000/api/techlogs", {
+      const res = await fetch(`/api/techlogs`, {
         headers: { "Authorization": `Bearer ${token}` }
       })
       if (res.ok) {
@@ -170,8 +190,65 @@ export function MachineProvider({ children }) {
     }
   }
 
+  // alertsHistory: full log of every alert that ever happened
+  const [alertsHistory, setAlertsHistory] = useState([])
+
+  // Fetch alerts from backend
+  const fetchAlerts = async () => {
+    try {
+      const token = localStorage.getItem("access_token")
+      const res = await fetch(`/api/alerts`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const formattedAlerts = data.map(a => ({
+          ...a,
+          timestamp: new Date(a.timestamp),
+          conveyor: `Conveyor ${a.conveyor_id}` // Map backend ID to frontend name
+        }))
+        setAlertsHistory(formattedAlerts)
+      }
+    } catch (e) {
+      console.error("Failed to fetch alerts:", e)
+    }
+  }
+
+  // Fetch the current snapshot immediately on page load
+  const fetchCurrentSnapshot = async () => {
+    try {
+      const token = localStorage.getItem("access_token")
+      const res = await fetch(`/api/conveyor/1/latest`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+      if (res.ok) {
+        const liveData = await res.json()
+        setconveyors(prev => prev.map(c => {
+          if (c.id === liveData.conveyor_id) {
+            return {
+              ...c,
+              isRunning: liveData.is_running,
+              speed: liveData.speed,
+              sensors: {
+                temperature: liveData.temperature,
+                current: liveData.current,
+              },
+              itemsToday: liveData.items_today || 0,
+              runtimeSeconds: liveData.runtime_seconds || 0,
+            }
+          }
+          return c
+        }))
+      }
+    } catch (e) {
+      console.error("Failed to fetch initial conveyor snapshot:", e)
+    }
+  }
+
   useEffect(() => {
     fetchTechLogs()
+    fetchAlerts() // Fetch alerts when component loads
+    fetchCurrentSnapshot() // Get immediate machine status on load
   }, [])
 
   // Adds a new log entry
@@ -188,7 +265,7 @@ export function MachineProvider({ children }) {
 
     try {
       const token = localStorage.getItem("access_token")
-      const res = await fetch("http://localhost:8000/api/techlogs", {
+      const res = await fetch(`/api/techlogs`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -207,17 +284,70 @@ export function MachineProvider({ children }) {
       console.error("Error saving tech log:", error)
     }
   }
-  // alertsHistory: full log of every alert that ever happened
-// In real app this comes from your backend database
-const [alertsHistory, setAlertsHistory] = useState([])
 
-// Mark an alert as resolved
-function resolveAlert(id) {
-  setAlertsHistory(prev =>
-    prev.map(a => a.id === id ? { ...a, resolved: true } : a)
-  )
-}
+  // Mark an alert as resolved
+  async function resolveAlert(id) {
+    try {
+      const token = localStorage.getItem("access_token")
+      const res = await fetch(`/api/alerts/${id}/resolve`, {
+        method: "PATCH",
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+      if (res.ok) {
+        // Locally update the UI to show it's resolved without reloading the page
+        setAlertsHistory(prev =>
+          prev.map(a => a.id === id ? { ...a, resolved: true } : a)
+        )
+      }
+    } catch (e) {
+      console.error("Failed to resolve alert:", e)
+    }
+  }
 
+ useEffect(() => {
+    // Connect to the backend stream using relative path
+    // This allows it to work on mobile via your network IP
+    const eventSource = new EventSource("/api/stream")
+
+    // Listen for new messages from the backend
+    eventSource.onmessage = (event) => {
+      const liveData = JSON.parse(event.data)
+      console.log("SSE Received:", liveData) // Added for debugging
+      
+      // Auto-refresh alerts whenever new data comes in
+      fetchAlerts()
+      
+      // Look for the specific conveyor (e.g. Conveyor 1)
+      setconveyors(prev => prev.map(c => {
+        // Ensure both IDs are numbers for a safe comparison
+        if (Number(c.id) === Number(liveData.conveyor_id)) {
+          // Merge the real backend data into our React state!
+          return {
+            ...c,
+            isRunning: liveData.is_running,
+            speed: liveData.speed,
+            sensors: {
+              temperature: liveData.temperature,
+              current: liveData.current,
+            },
+            fault: liveData.fault,
+            itemsToday: liveData.items_today,
+            runtimeSeconds: liveData.runtime_seconds,
+          }
+        }
+        return c
+      }))
+    }
+
+    eventSource.onerror = (err) => {
+      console.error("SSE Connection Error:", err)
+    }
+
+    // Cleanup connection if the component unmounts
+    return () => {
+      eventSource.close()
+    }
+  }, [])
   return (
     <MachineContext.Provider value={{
       conveyors,

@@ -23,18 +23,20 @@ function Navbar() {
   }
 
   return (
-    <nav className="bg-[var(--color-nav-bg)] border-b border-border-card px-5 py-2.5 flex items-center justify-between flex-shrink-0 relative z-10 shadow-md">
-      <div className="flex items-center gap-3">
-        <div className="w-2 h-2 bg-success rounded-sm animate-pulse shadow-[0_0_8px_var(--color-success)]" />
-        <span className="text-white font-mono text-[13px] font-bold tracking-[0.2em]">
-          CONVEYOR / SCADA
-        </span>
-        <span className="text-border-card text-sm">|</span>
-        <span className="text-primary font-mono text-[10px] tracking-widest font-bold">
+    <nav className="bg-[var(--color-nav-bg)] border-b border-border-card px-3 md:px-5 py-3 md:py-2.5 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-0 flex-shrink-0 relative z-10 shadow-md">
+      <div className="flex flex-col md:flex-row items-center gap-1 md:gap-3">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 bg-success rounded-sm animate-pulse shadow-[0_0_8px_var(--color-success)]" />
+          <span className="text-white font-mono text-[13px] md:text-[13px] font-bold tracking-[0.2em] text-center">
+            CONVEYOR / SCADA
+          </span>
+        </div>
+        <span className="hidden md:inline text-border-card text-sm">|</span>
+        <span className="text-primary font-mono text-[9px] md:text-[10px] tracking-widest font-bold text-center">
           {selected ? `UPLINK: ${selected.name.toUpperCase()} [${selected.zone}]` : "AWAITING LINK..."}
         </span>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 md:gap-3 flex-wrap justify-center">
         <span className={`font-mono text-[9px] border border-l-2 px-2 py-0.5 rounded-none ${roleColors[user?.role]}`}>
           {user?.role?.toUpperCase()}
         </span>
