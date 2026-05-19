@@ -23,7 +23,7 @@ export function MachineProvider({ children }) {
       sensors: { temperature: 0, current: 0 },
       fault: null,
       itemsToday: 0,
-      dailyTarget: 300,
+      dailyTarget: 0,
       runtimeSeconds: 0,
     },
     {
@@ -132,30 +132,7 @@ export function MachineProvider({ children }) {
     return alerts
   }
 
-  // Calculate machine health score (0-100%)
-  // Based on: temperature and current staying within safe range
-  function getHealthScore(conveyor) {
-    if (!conveyor.isRunning) return 0
-    const { temperature, current } = conveyor.sensors
-
-    let tempScore = 100
-    if (temperature >= THRESHOLDS.temperature.critical) tempScore = 0
-    else if (temperature > THRESHOLDS.temperature.warning) {
-      const range = THRESHOLDS.temperature.critical - THRESHOLDS.temperature.warning
-      const over = temperature - THRESHOLDS.temperature.warning
-      tempScore = 100 - (over / range) * 100
-    }
-
-    let currentScore = 100
-    if (current >= THRESHOLDS.current.critical) currentScore = 0
-    else if (current > THRESHOLDS.current.warning) {
-      const range = THRESHOLDS.current.critical - THRESHOLDS.current.warning
-      const over = current - THRESHOLDS.current.warning
-      currentScore = 100 - (over / range) * 100
-    }
-
-    return Math.round((tempScore + currentScore) / 2)
-  }
+  
 
   // Convert seconds to HH:MM:SS string
   function formatRuntime(seconds) {
@@ -234,6 +211,7 @@ export function MachineProvider({ children }) {
                 current: liveData.current,
               },
               itemsToday: liveData.items_today || 0,
+              dailyTarget: liveData.daily_target || c.dailyTarget,
               runtimeSeconds: liveData.runtime_seconds || 0,
             }
           }
@@ -332,6 +310,7 @@ export function MachineProvider({ children }) {
             },
             fault: liveData.fault,
             itemsToday: liveData.items_today,
+            dailyTarget: liveData.daily_target || c.dailyTarget,
             runtimeSeconds: liveData.runtime_seconds,
           }
         }
@@ -351,15 +330,16 @@ export function MachineProvider({ children }) {
   return (
     <MachineContext.Provider value={{
       conveyors,
+      setconveyors,
       selectedId,
       setSelectedId,
       getConveyor,
+      updateConveyor,
       startConveyor,
       stopConveyor,
       increaseSpeed,
       decreaseSpeed,
       getAlerts,
-      getHealthScore,
       formatRuntime,
       THRESHOLDS,
       techLogs,

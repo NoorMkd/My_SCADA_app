@@ -57,7 +57,18 @@ async def generate_report(
     # Bad     = always near limits = score close to 0
     temp_score    = max(0.0, 100 - (avg_temp    / 75) * 100)
     current_score = max(0.0, 100 - (avg_current / 18) * 100)
-    efficiency    = round((temp_score + current_score) / 2)
+    health_score  = round((temp_score + current_score) / 2)
+
+    # ── Production Efficiency ─────────────────────────────
+    # Items produced vs theoretical maximum at current speeds
+    total_items = sum(1 for r in sensors if r.object_detected)
+    # Very simple theoretical max placeholder until we wire the actual logic
+    theoretical_max = max(100, int(statistics.mean(speeds) * 5)) 
+    production_efficiency = round((total_items / theoretical_max) * 100) if theoretical_max > 0 else 0
+    production_efficiency = min(100, production_efficiency)
+
+    # We use health_score for the main color/label logic for now
+    efficiency = health_score
 
     # ── Label and color ───────────────────────────────────
     # Matches the colors already in your HistoryPage.jsx
@@ -100,23 +111,27 @@ async def generate_report(
             f"no maintenance logged in {days_since} days"
         )
 
+    # Add Production Efficiency info
+    prod_msg = f"Conveyor produced {total_items} items (≈{production_efficiency}% of theoretical max capacity at current speeds)"
+
     if issues:
         explanation = (
-            f"Analysis of the last 30 days shows: "
+            f"{prod_msg}. Analysis of the last 30 days shows: "
             + "; ".join(issues) + "."
         )
     else:
         explanation = (
-            f"Conveyor {conveyor_id} is performing well. "
+            f"{prod_msg}. Conveyor {conveyor_id} is performing well. "
             "All sensors within normal range. "
             "No anomalies detected over the last 30 days."
         )
 
     # ── Estimated production losses ───────────────────────
-    # Simple linear estimate based on efficiency gap
-    gap          = 100 - efficiency
-    loss_7d_pct  = round(gap * 0.12, 1)
-    loss_30d_pct = round(gap * 0.45, 1)
+    # Replace money losses with items loss
+    gap_pct      = 100 - production_efficiency
+    items_lost   = theoretical_max - total_items if theoretical_max > total_items else 0
+    loss_7d_pct  = gap_pct
+    loss_30d_pct = gap_pct 
 
     # ── Recommendations ───────────────────────────────────
     recommendations = _build_recommendations(
@@ -139,11 +154,11 @@ async def generate_report(
         "losses": {
             "sevenDays": {
                 "pct": f"−{loss_7d_pct}%",
-                "DT":  f"≈ {int(loss_7d_pct * 80)} DT",
+                "DT":  f"≈ {items_lost} items",
             },
             "thirtyDays": {
                 "pct": f"−{loss_30d_pct}%",
-                "DT":  f"≈ {int(loss_30d_pct * 80)} DT",
+                "DT":  f"≈ {items_lost * 4} items",
             },
         },
         "recommendations":  recommendations,

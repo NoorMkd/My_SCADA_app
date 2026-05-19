@@ -14,14 +14,16 @@
 import asyncio
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import init_db, AsyncSessionLocal
-from app.routers import sensors, auth
+from app.routers import sensors, auth, production
 from app.sse_manager import sse_manager
 from app.mqtt_handler import init_mqtt_handler, start_mqtt
-
+from fastapi.responses import StreamingResponse
+import asyncio
+import time
 
 # ============================================================
 # LIFESPAN
@@ -130,6 +132,9 @@ app.include_router(sensors.router)
 # All Authentication routes (login, register)
 app.include_router(auth.router)
 
+# Production Configuration routes
+app.include_router(production.router)
+
 
 # ============================================================
 # HEALTH CHECK
@@ -148,4 +153,56 @@ async def root():
         "message": "Conveyor SCADA API is online",
         "docs":    "http://localhost:8000/docs",
         "stream":  "http://localhost:8000/api/stream",
+    }
+# Store the latest frame per conveyor in memory
+# { conveyor_id: jpeg_bytes }
+latest_frames = {}
+
+# ── ENDPOINT 1: ESP32-CAM posts frames here ──
+@app.post("/api/stream/frame")
+async def receive_frame(request: Request):
+    # Read the JPEG bytes from the request body
+    frame_bytes = await request.body()
+    conveyor_id = request.headers.get("X-Conveyor-ID", "1")
+
+    # Store it — overwrites the previous frame
+    latest_frames[conveyor_id] = frame_bytes
+
+    return {"status": "ok"}
+
+
+# ── ENDPOINT 2: Frontend reads the MJPEG stream here ──
+@app.get("/api/stream/{conveyor_id}")
+async def video_stream(conveyor_id: str):
+
+    async def generate():
+        # Keep sending frames forever (until browser disconnects)
+        while True:
+            frame = latest_frames.get(conveyor_id)
+
+            if frame:
+                # MJPEG format — each frame is wrapped like this
+                yield (
+                    b"--frame\r\n"
+                    b"Content-Type: image/jpeg\r\n\r\n"
+                    + frame +
+                    b"\r\n"
+                )
+
+            # Wait for next frame
+            await asyncio.sleep(0.04)  # ~25 FPS
+
+    return StreamingResponse(
+        generate(),
+        media_type="multipart/x-mixed-replace; boundary=frame"
+    )
+
+
+# ── ENDPOINT 3: Check if camera is online ──
+@app.get("/api/stream/{conveyor_id}/status")
+async def stream_status(conveyor_id: str):
+    has_frame = conveyor_id in latest_frames
+    return {
+        "online": has_frame,
+        "conveyor_id": conveyor_id
     }

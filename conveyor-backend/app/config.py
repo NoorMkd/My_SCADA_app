@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     # Your ESP32 code must publish to this exact string
     MQTT_TOPIC: str = "motors/conveyor_1/sensors"
 
+    # The topic for sending commands back to the ESP32
+    MQTT_TOPIC_COMMANDS: str = "motors/conveyor_1/commands"
+
     # --- Conveyor ---
     # Which conveyor ID the ESP32 belongs to
     # We only have one ESP32 → Conveyor 1
@@ -36,12 +39,12 @@ class Settings(BaseSettings):
 
     # --- Sensor Alert Thresholds ---
     # If temperature goes above these → create an alert
-    TEMP_WARNING: float = 30.0   # °C
-    TEMP_CRITICAL: float = 31.5  # °C
+    TEMP_WARNING: float = 60.0   # °C
+    TEMP_CRITICAL: float = 80.5  # °C
 
     # If current goes above these → create an alert
-    CURRENT_WARNING: float = 14.0  # Amperes
-    CURRENT_CRITICAL: float = 18.0  # Amperes
+    CURRENT_WARNING: float = 5.0  # Amperes
+    CURRENT_CRITICAL: float = 10.0  # Amperes
 
     # --- Security ---
     SECRET_KEY: str 

@@ -39,6 +39,12 @@ const NAV_ITEMS = [
     path: "/users",
     roles: ["admin", "supervisor"],
   },
+  {
+    icon: "⚙",
+    label: "CONFIG",
+    path: "/config",
+    roles: ["admin", "operator"],
+  },
 ]
 
 function Sidebar() {

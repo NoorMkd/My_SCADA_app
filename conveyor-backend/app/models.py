@@ -168,3 +168,41 @@ class User(Base):
     
     # True = can log in, False = soft deleted/deactivated
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+# ============================================================
+# TABLE 5: production_config
+# ============================================================
+class ProductionConfig(Base):
+    __tablename__ = "production_config"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), 
+        server_default=func.now(), 
+        onupdate=func.now()
+    )
+    
+    todays_target: Mapped[int] = mapped_column(Integer, default=1000)
+    material_name: Mapped[str] = mapped_column(String(100), default="Standard Box")
+    material_type: Mapped[str] = mapped_column(String(50), default="Cardboard")
+    
+    item_length_cm: Mapped[float] = mapped_column(Float, default=10.0) # Length in cm
+    item_mass_kg: Mapped[float] = mapped_column(Float, default=1.0) # Mass in kg
+    conveyor_speed_m_s: Mapped[float] = mapped_column(Float, default=0.5) # Speed in m/s
+    conveyor_length_m: Mapped[float] = mapped_column(Float, default=5.0) # Total length of conveyor
+
+    @property
+    def time_to_pass_sec(self) -> float:
+        if self.conveyor_speed_m_s and self.conveyor_speed_m_s > 0:
+            return (self.item_length_cm / 100.0) / self.conveyor_speed_m_s
+        return 0.0
+
+    @property
+    def total_time_required_sec(self) -> float:
+        # Minimum total time: time for all items to pass the sensor + time for the last item to transit the rest
+        if not self.conveyor_speed_m_s or self.conveyor_speed_m_s <= 0:
+            return 0.0
+        transit_time = self.conveyor_length_m / self.conveyor_speed_m_s
+        return (self.time_to_pass_sec * (self.todays_target or 0)) + transit_time

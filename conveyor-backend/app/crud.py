@@ -66,14 +66,11 @@ async def get_history(
     db: AsyncSession,
     conveyor_id: int,
     days: int = 7,
+    limit: int = 15,
 ) -> list[SensorReading]:
     """
-    Returns all readings for the last N days.
+    Returns only the most recent N readings.
     Used by HistoryPage charts.
-
-    Note: ESP32 sends every 5 seconds.
-    So 7 days = 7 × 24 × 3600 / 5 = ~120,960 rows.
-    TimescaleDB handles this easily.
     """
     since = datetime.now(timezone.utc) - timedelta(days=days)
 
@@ -85,9 +82,11 @@ async def get_history(
                 SensorReading.timestamp >= since,
             )
         )
-        .order_by(SensorReading.timestamp.asc())
+        .order_by(SensorReading.timestamp.desc())
+        .limit(limit)
     )
-    return list(result.scalars().all())
+    # Reverse so time flows left to right on the charts
+    return list(reversed(result.scalars().all()))
 
 
 async def count_items_today(
@@ -173,15 +172,15 @@ async def create_alert(
 async def get_all_alerts(
     db: AsyncSession,
     conveyor_id: int | None = None,
+    limit: int = 15,
 ) -> list[FaultAlert]:
     """
-    Returns all alerts sorted newest first.
-    Maps to alertsHistory in your AlertsPage.
-    Optional filter by conveyor_id.
+    Returns the most recent N alerts.
     """
     query = (
         select(FaultAlert)
         .order_by(FaultAlert.timestamp.desc())
+        .limit(limit)
     )
 
     if conveyor_id is not None:
@@ -220,14 +219,15 @@ async def resolve_alert(
 async def get_all_techlogs(
     db: AsyncSession,
     conveyor_id: int | None = None,
+    limit: int = 15,
 ) -> list[MaintenanceIntervention]:
     """
-    Returns all technician log entries newest first.
-    Maps to techLogs in your TechLogPage.
+    Returns the most recent N technician log entries.
     """
     query = (
         select(MaintenanceIntervention)
         .order_by(MaintenanceIntervention.timestamp.desc())
+        .limit(limit)
     )
 
     if conveyor_id is not None:
@@ -390,3 +390,33 @@ async def delete_user(db: AsyncSession, user_id: int) -> bool:
     await db.delete(user)
     await db.commit()
     return True
+
+
+# ============================================================
+# PRODUCTION CONFIGURATION
+# singleton logic
+# ============================================================
+from app.models import ProductionConfig
+
+async def get_production_config(db: AsyncSession) -> ProductionConfig:
+    # Always get the first row. If not exists, create one with defaults.
+    result = await db.execute(select(ProductionConfig).order_by(ProductionConfig.id.asc()).limit(1))
+    config = result.scalars().first()
+    
+    if not config:
+        config = ProductionConfig()
+        db.add(config)
+        await db.commit()
+        await db.refresh(config)
+        
+    return config
+
+async def update_production_config(db: AsyncSession, config_in: dict) -> ProductionConfig:
+    config = await get_production_config(db)
+    
+    for key, value in config_in.items():
+        setattr(config, key, value)
+        
+    await db.commit()
+    await db.refresh(config)
+    return config

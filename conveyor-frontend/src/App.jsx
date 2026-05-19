@@ -13,6 +13,7 @@ import HistoryPage   from "./pages/HistoryPage"
 import AlertsPage    from "./pages/AlertsPage"
 import TechLogPage   from "./pages/TechLogPage"
 import UsersPage     from "./pages/UsersPage"
+import ConfigPage    from "./pages/ConfigPage"
 
 // ProtectedRoute: kicks non-logged-in users back to login
 function ProtectedRoute({ children }) {
@@ -58,6 +59,14 @@ function App() {
         <Route path="/alerts" element={
           <ProtectedRoute>
             <AlertsPage />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/config" element={
+          <ProtectedRoute>
+            <RoleRoute allowedRoles={["admin", "operator"]}>
+              <ConfigPage />
+            </RoleRoute>
           </ProtectedRoute>
         }/>
 

@@ -21,25 +21,41 @@ from pydantic import BaseModel, field_validator
 # If any field is missing or wrong type → rejected automatically
 # ============================================================
 class SensorPayload(BaseModel):
-    """
-    One message from the ESP32.
-    Arrives every 5 seconds via MQTT.
-    """
-    timestamp: Optional[str] = None
-    speed: float
-    current: float
-    temperature: float
-    object_detected: bool
-    rpm: float
-    status: str
-    fault: Optional[str] = None
+    conveyor_id: str
+    event: str
+    timestamp_ms: Optional[int] = None
+    s1_state: bool = False
+    s2_state: bool = False
+    temperature: Optional[float] = None
+    current: Optional[float] = None
+    speed_rpm: Optional[int] = None
+    target_rpm: Optional[int] = None
+    freq_hz: Optional[float] = None
+    item_count: int = 0
+    motor_on: bool = False
+    travel_time_ms: Optional[float] = None
+    direction: Optional[str] = None
 
-    @field_validator("speed")
-    @classmethod
-    def cap_speed(cls, v: float) -> float:
-        # Speed is treated as percentage — cap at 100
-        # If ESP32 ever sends 120 → we store 100
-        return min(v, 100.0)
+    class Config:
+        extra = "ignore"   # tolerate extra fields without failing
+        
+    @property
+    def speed(self) -> float:
+        # Convert RPM to a 0-100% speed assuming max 68.0 RPM based on ESP32 main.cpp
+        rpm = float(self.speed_rpm)
+        return min((rpm / 68.0) * 100.0, 100.0)
+
+    @property
+    def rpm(self) -> float:
+        return float(self.speed_rpm)
+
+    @property
+    def status(self) -> str:
+        return "running" if self.motor_on else "stopped"
+
+    @property
+    def fault(self) -> str | None:
+        return None
 
 
 # ============================================================
@@ -66,6 +82,7 @@ class LiveSensorData(BaseModel):
     # Derived values (calculated by the backend)
     is_running: bool        # True if status == "running"
     items_today: int        # count of object_detected=True today
+    daily_target: int       # pushed live from db config
     runtime_seconds: int    # seconds of status="running" today
 
     timestamp: str
@@ -176,3 +193,28 @@ class UserResponse(BaseModel):
     role: str
     is_active: bool
     created_at: datetime
+
+
+# ============================================================
+# PRODUCTION CONFIGURATION SCHEMAS
+# ============================================================
+class ProductionConfigBase(BaseModel):
+    todays_target: int
+    material_name: str
+    material_type: str
+    item_length_cm: float
+    item_mass_kg: float
+    conveyor_speed_m_s: float
+    conveyor_length_m: float
+
+class ProductionConfigIn(ProductionConfigBase):
+    pass
+
+class ProductionConfigOut(ProductionConfigBase):
+    model_config = {"from_attributes": True}
+
+    id: int
+    updated_at: datetime
+    # We include the computation from the model property
+    time_to_pass_sec: float
+    total_time_required_sec: float

@@ -21,6 +21,7 @@ from app.sse_manager import sse_manager
 from app.schemas import TechLogIn
 from app import crud
 from app.ml_engine import generate_report
+from app.mqtt_handler import publish_command
 
 from app.auth import get_current_user, check_admin_or_supervisor  # Import Security
 
@@ -87,6 +88,7 @@ async def get_latest(
     session and passes it here — we don't manage it manually.
     """
     reading = await crud.get_latest_reading(db, conveyor_id)
+    config = await crud.get_production_config(db)
 
     if not reading:
         raise HTTPException(
@@ -105,24 +107,58 @@ async def get_latest(
         "status":           reading.status,
         "fault":            reading.fault,
         "is_running":       reading.status == "running",
+        "daily_target":     config.todays_target if config else 300,
     }
 
+
+from app.config import settings
+
+@router.post("/conveyor/{conveyor_id}/start")
+async def start_motor(
+    conveyor_id: int,
+    current_user = Depends(get_current_user)
+):
+    """Tell ESP32 to start the motor via MQTT"""
+    success = publish_command({"command": "start"})
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to publish MQTT command")
+    return {"status": "ok", "message": "Command sent"}
+
+@router.post("/conveyor/{conveyor_id}/stop")
+async def stop_motor(
+    conveyor_id: int,
+    current_user = Depends(get_current_user)
+):
+    """Tell ESP32 to stop the motor via MQTT"""
+    success = publish_command({"command": "stop"})
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to publish MQTT command")
+    return {"status": "ok", "message": "Command sent"}
+
+@router.post("/conveyor/{conveyor_id}/speed")
+async def set_motor_speed(
+    conveyor_id: int,
+    rpm: float,
+    current_user = Depends(get_current_user)
+):
+    """Tell ESP32 to change motor speed via MQTT"""
+    success = publish_command({"command": "speed", "rpm": rpm})
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to publish MQTT command")
+    return {"status": "ok", "message": "Command sent"}
 
 @router.get("/history/{conveyor_id}")
 async def get_history(
     conveyor_id: int,
     days: int = 7,
+    limit: int = 15,
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user)  # Requires Login
 ):
     """
-    GET /api/history/1
-    GET /api/history/1?days=30   ← optional, default is 7
-
-    Returns all sensor readings for the last N days.
-    Used by HistoryPage charts (sensor trends).
+    Returns only the most recent N sensor readings for the last N days.
     """
-    readings = await crud.get_history(db, conveyor_id, days)
+    readings = await crud.get_history(db, conveyor_id, days, limit)
 
     return [
         {
@@ -145,21 +181,14 @@ async def get_history(
 @router.get("/alerts")
 async def get_alerts(
     conveyor_id: int = None,
+    limit: int = 15,
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user)  # Requires Login
 ):
     """
-    GET /api/alerts
-    GET /api/alerts
-    GET /api/alerts?conveyor_id=1   ← optional filter
-
-    Returns all alerts sorted newest first.
-    Maps to alertsHistory in your AlertsPage.
-
-    The response shape matches what AlertsPage expects:
-      id, conveyor, message, level, resolved, timestamp
+    Returns most recent 15 alerts.
     """
-    alerts = await crud.get_all_alerts(db, conveyor_id)
+    alerts = await crud.get_all_alerts(db, conveyor_id, limit)
 
     return [
         {
@@ -210,20 +239,14 @@ async def resolve_alert(
 @router.get("/techlogs")
 async def get_techlogs(
     conveyor_id: int = None,
+    limit: int = 15,
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user)  # Requires Login
 ):
     """
-    GET /api/techlogs
-    GET /api/techlogs?conveyor_id=1   ← optional filter
-
-    Returns all technician log entries newest first.
-    Maps to techLogs in your TechLogPage.
-
-    Response shape matches what TechLogPage expects:
-      id, author, conveyor, type, text, timestamp
+    Returns most recent 15 technician log entries.
     """
-    logs = await crud.get_all_techlogs(db, conveyor_id)
+    logs = await crud.get_all_techlogs(db, conveyor_id, limit)
 
     return [
         {

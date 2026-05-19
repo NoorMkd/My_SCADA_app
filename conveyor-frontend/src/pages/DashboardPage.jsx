@@ -2,7 +2,7 @@
 // The main page — assembles all components together
 // Layout:
 //   TOP    → 3 gauges (Temp, Current, Speed) + Items Counter
-//   MIDDLE → Health Score circle + Location Card
+//   MIDDLE → Camera Feed + Location Card
 //   BOTTOM → Machine Controls + Alerts
 //   RIGHT  → Production Panel (all conveyors list)
 
@@ -11,7 +11,7 @@ import { useMachine } from "../context/MachineContext"
 import { useAuth } from "../context/AuthContext"
 import Navbar from "../components/Navbar"
 import GaugeCard from "../components/GaugeCard"
-import HealthScore from "../components/HealthScore"
+import CameraFeed from "../components/CameraFeed"
 import ItemsCounter from "../components/ItemsCounter"
 import LocationCard from "../components/LocationCard"
 import ProductionPanel from "../components/ProductionPanel"
@@ -23,7 +23,6 @@ function DashboardPage() {
     selectedId,
     getConveyor,
     getAlerts,
-    getHealthScore,
     formatRuntime,
     startConveyor,
     stopConveyor,
@@ -45,8 +44,7 @@ function DashboardPage() {
   // Use live calculation for instant dynamic alerts on the dashboard
   const alerts = cv ? getAlerts(cv) : []
 
-  const healthScore = cv ? getHealthScore(cv)  : 0
-  const runtime     = cv ? formatRuntime(cv.runtimeSeconds) : "00:00:00"
+   const runtime     = cv ? formatRuntime(cv.runtimeSeconds) : "00:00:00"
 
   // Is the machine offline?
   const offline = cv ? !cv.isRunning : true
@@ -130,9 +128,8 @@ function DashboardPage() {
           {/* ══ LOWER AREA: keep Location on right-top, move Health/Controls/Alerts on left side ══ */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1.15fr_1fr] gap-3 flex-shrink-0 items-stretch">
 
-            {/* ── MACHINE HEALTH (left-top) ── */}
-            <HealthScore score={healthScore} />
-
+            {/* ── CAMERA FEED (left-top) ── */}
+            <CameraFeed conveyorId={selectedId} />
             {/* ── MIDDLE COLUMN: CONTROLS + ALERTS ── */}
             <div className="flex flex-col gap-3 h-full">
               {/* ── MACHINE CONTROLS (middle-top) ── */}
