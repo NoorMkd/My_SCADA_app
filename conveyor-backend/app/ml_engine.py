@@ -16,6 +16,137 @@
 # Output shape matches AI_DATA in your HistoryPage.jsx exactly
 # so React needs zero changes when we upgrade to real ML
 # ============================================================
+import os
+import joblib
+import numpy as np
+
+# ── LOAD TRAINED MODELS ───────────────────────────────────
+_BASE = os.path.join(os.path.dirname(__file__), 'ml_engine', 'models')
+
+try:
+    _anomaly_model = joblib.load(os.path.join(_BASE, 'anomaly.pkl'))
+    _rul_model     = joblib.load(os.path.join(_BASE, 'rul.pkl'))
+    _alert_model   = joblib.load(os.path.join(_BASE, 'alert.pkl'))
+    print("[ML] Models loaded successfully ✓")
+except Exception as e:
+    print(f"[ML] Warning: Could not load models → {e}")
+    _anomaly_model = None
+    _rul_model     = None
+    _alert_model   = None
+
+
+# ── MODEL 1 : ANOMALY SCORE ───────────────────────────────
+def predict_anomaly(belt_speed, speed_deviation, temperature, current, items_count):
+    if _anomaly_model is None:
+        return {"score": 0, "label": "NO MODEL", "explanation": "Model not loaded."}
+
+    X = np.array([[belt_speed, speed_deviation, temperature, current, items_count]])
+    score = _anomaly_model.decision_function(X)[0]
+    anomaly_score = round(max(0, min(100, (-score + 0.2) * 200)), 1)
+
+    if anomaly_score <= 30:
+        label = "NORMAL"
+    elif anomaly_score <= 60:
+        label = "WARNING"
+    else:
+        label = "CRITICAL"
+
+    return {
+        "score":       anomaly_score,
+        "label":       label,
+        "explanation": f"Anomaly score is {anomaly_score}/100. Motor is {label.lower()}."
+    }
+
+
+# ── MODEL 2 : REMAINING USEFUL LIFE ──────────────────────
+def predict_rul(belt_speed, speed_deviation, temperature,
+                current, days_since_maintenance, interventions_30d):
+    if _rul_model is None:
+        return {"days": 0, "label": "NO MODEL", "explanation": "Model not loaded."}
+
+    X = np.array([[belt_speed, speed_deviation, temperature,
+                   current, days_since_maintenance, interventions_30d]])
+    days = round(float(_rul_model.predict(X)[0]), 1)
+    days = max(0, days)
+
+    if days >= 60:   label = "HEALTHY"
+    elif days >= 30: label = "MODERATE RISK"
+    elif days >= 10: label = "HIGH RISK"
+    else:            label = "CRITICAL"
+
+    return {
+        "days":        days,
+        "label":       label,
+        "explanation": f"Motor will require maintenance in approximately {int(days)} days."
+    }
+
+
+# ── MODEL 3 : ALERT FORECAST ──────────────────────────────
+def predict_alert(belt_speed, speed_deviation, temperature, current,
+                  items_count, days_since_maintenance, interventions_30d):
+    if _alert_model is None:
+        return {"label": "NO MODEL", "count": 0, "recommendation": "Model not loaded."}
+
+    X = np.array([[belt_speed, speed_deviation, temperature, current,
+                   items_count, days_since_maintenance, interventions_30d]])
+    label      = _alert_model.predict(X)[0]
+    proba      = _alert_model.predict_proba(X)[0]
+    confidence = round(float(max(proba)) * 100, 1)
+
+    if label == "LOW":
+        count          = 1
+        recommendation = "Normal activity expected. No action needed."
+    elif label == "MODERATE":
+        count          = 5
+        recommendation = "Moderate alert activity expected. Monitor closely."
+    else:
+        count          = 9
+        recommendation = "High alert activity expected. Notify supervisor."
+
+    return {
+        "label":          label,
+        "count":          count,
+        "confidence":     confidence,
+        "recommendation": recommendation
+    }
+
+
+# ── KPI 1 : PRODUCTION EFFICIENCY ────────────────────────
+def calculate_oee(items_today, theoretical_max):
+    if theoretical_max == 0:
+        return {"score": 0, "items_today": 0,
+                "theoretical_max": 0, "explanation": "No data."}
+
+    score      = round((items_today / theoretical_max) * 100, 1)
+    items_lost = theoretical_max - items_today
+
+    return {
+        "score":           score,
+        "items_today":     items_today,
+        "theoretical_max": theoretical_max,
+        "items_lost":      items_lost,
+        "explanation":     f"The conveyor produced {items_today} items, "
+                           f"{score}% of maximum capacity. "
+                           f"{items_lost} items lost."
+    }
+
+
+# ── KPI 2 : MAINTENANCE DUE SCORE ────────────────────────
+def calculate_maintenance_due(days_since_last):
+    score = min(100, round((days_since_last / 15) * 100, 1))
+
+    if score < 50:
+        recommendation = "Maintenance is up to date."
+    elif score < 80:
+        recommendation = "Maintenance will be due soon. Plan a visit."
+    else:
+        recommendation = "Maintenance is overdue. Urgent intervention required."
+
+    return {
+        "score":          score,
+        "days_since_last": days_since_last,
+        "recommendation": recommendation
+    }
 
 import statistics
 from collections import defaultdict

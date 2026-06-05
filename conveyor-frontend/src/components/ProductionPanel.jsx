@@ -23,7 +23,7 @@ function ProductionPanel() {
     <div className="border-l border-[var(--color-border-card)] bg-[var(--color-bg-base)] p-2.5 flex flex-col gap-2 overflow-y-auto">
 
       {/* Panel title */}
-      <p className="text-[var(--color-text-dim)] text-[8px] tracking-[3px] pb-2 border-b border-[var(--color-border-card)] flex-shrink-0">
+      <p className="text-[var(--color-text-dim)] text-[14px] tracking-[3px] pb-2 border-b border-[var(--color-border-card)] flex-shrink-0">
         PRODUCTION LINE
       </p>
 
@@ -55,7 +55,7 @@ function ProductionPanel() {
           >
             {/* Conveyor name + status dot */}
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] font-mono">{cv.name}</span>
+              <span className="text-[14px] font-mono">{cv.name}</span>
               <div
                 className="w-2 h-2 rounded-full"
                 style={{
@@ -69,12 +69,12 @@ function ProductionPanel() {
 
             {/* Sensor values */}
             {[
-              ["TEMP",    cv.isRunning ? `${cv.sensors.temperature}°C` : "--", cv.sensors.temperature >= 65 ? "#d5a507" : "#0098c2"],
-              ["CURRENT", cv.isRunning ? `${cv.sensors.current}A`      : "--", cv.sensors.current >= 14     ? "#d5a507" : "#0098c2"],
-              ["SPEED",   `${cv.speed}%`,  "var(--color-primary)"],
+              ["TEMP",    `${cv.sensors.temperature}°C`, cv.sensors.temperature >= 65 ? "#d5a507" : "#0098c2"],
+              ["CURRENT", `${cv.sensors.current}A`,      cv.sensors.current >= 2.2    ? "#d5a507" : "#0098c2"],
+              ["SPEED",   `${cv.speed}Hz`, "var(--color-primary)"],
               ["ITEMS",   `${cv.itemsToday}`, "var(--color-primary)"],
             ].map(([label, value, color]) => (
-              <div key={label} className="flex justify-between text-[9px] mb-0.5">
+              <div key={label} className="flex justify-between text-[12px] mb-0.5">
                 <span className="text-[var(--color-text-dim)]">{label}</span>
                 <span
                   className="font-mono"
@@ -91,7 +91,7 @@ function ProductionPanel() {
       {/* Add conveyor button — only for admin/supervisor */}
       {canAddConveyor && (
         <div className="mt-auto">
-          <button className="w-full bg-transparent border border-dashed border-[var(--color-border-card)] rounded-xl text-[var(--color-text-dim)] text-[8px] tracking-wider py-2 cursor-pointer font-mono hover:border-[var(--color-primary)44] hover:text-[var(--color-primary)] transition-colors duration-200">
+          <button className="w-full bg-transparent border border-dashed border-[var(--color-border-card)] rounded-xl text-[var(--color-text-dim)] text-[14px] tracking-wider py-2 cursor-pointer font-mono hover:border-[var(--color-primary)44] hover:text-[var(--color-primary)] transition-colors duration-200">
             + ADD CONVEYOR
           </button>
         </div>

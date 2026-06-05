@@ -83,7 +83,7 @@ function Sidebar() {
               {item.icon}
             </span>
             {/* Tiny label below icon */}
-            <span className="text-[7px] tracking-[0.2em] font-bold uppercase leading-none mt-1">
+            <span className="text-[10px] tracking-[0.2em] font-bold uppercase leading-none mt-1">
               {item.label.slice(0, 4)}
             </span>
           </button>

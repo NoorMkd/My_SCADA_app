@@ -33,17 +33,21 @@ export default function ConfigPage() {
     fetchConfig();
   }, []);
 
-  // Sync conveyor speed dynamically from real-world state
+  // Sync belt speed from live IR sensor measurement (belt_speed_mps, in m/s).
+  // Only overrides when a real measurement exists — null means no item has passed yet,
+  // in which case we keep the last saved value from the DB.
   useEffect(() => {
-    if (activeConveyor && activeConveyor.speed !== undefined) {
-      // Assuming 100% speed = 1.0 m/s, so we divide by 100
-      const currentSpeedInMs = activeConveyor.speed / 100;
+    if (
+      activeConveyor &&
+      activeConveyor.belt_speed_mps !== null &&
+      activeConveyor.belt_speed_mps !== undefined
+    ) {
       setConfig(prev => ({
         ...prev,
-        conveyor_speed_m_s: currentSpeedInMs
+        conveyor_speed_m_s: activeConveyor.belt_speed_mps
       }));
     }
-  }, [activeConveyor?.speed]);
+  }, [activeConveyor?.belt_speed_mps]);
 
   const fetchConfig = async () => {
     try {
@@ -168,30 +172,32 @@ export default function ConfigPage() {
                 </div>
 
                 <div>
-                  <label className="block text-gray-400 text-sm mb-2">Conveyor Speed (m/s) [Live]</label>
+                  <label className="block text-gray-400 text-sm mb-2">
+                    Belt Speed (m/s){" "}
+                    <span className="text-xs text-blue-400">[auto — from IR sensors]</span>
+                  </label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="0.001"
                     name="conveyor_speed_m_s"
                     value={config.conveyor_speed_m_s}
                     onChange={handleChange}
                     className="w-full bg-gray-700 text-gray-400 rounded p-3 cursor-not-allowed opacity-75"
                     disabled={true}
-                    title="Speed is fixed based on real-time conveyor data"
+                    title="Updated automatically from the measured belt speed between IR sensors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-gray-400 text-sm mb-2">Conveyor Length (m) [Live]</label>
+                  <label className="block text-gray-400 text-sm mb-2">Conveyor Length (m)</label>
                   <input
                     type="number"
                     step="0.01"
                     name="conveyor_length_m"
                     value={config.conveyor_length_m}
                     onChange={handleChange}
-                    className="w-full bg-gray-700 text-gray-400 rounded p-3 cursor-not-allowed opacity-75"
-                    disabled={true}
-                    title="Length is fixed based on real-time dual IR Sensor logic"
+                    className="w-full bg-gray-700 text-white rounded p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={user?.role !== "admin" && user?.role !== "operator"}
                   />
                 </div>
               </div>

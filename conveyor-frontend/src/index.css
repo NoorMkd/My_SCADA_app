@@ -1,35 +1,41 @@
 @import "tailwindcss";
 
+/* Outside any layer — shifts the rem base so all Tailwind text sizes scale up */
+html {
+  font-size: 17px;
+  font-weight: 600;
+}
+
 @theme {
   /* RAW INDUSTRIAL SCADA PALETTE */
   --color-primary: #0098c2;     /* Pacific Blue (Action/Highlight) */
   --color-secondary: #0062a3;   /* Endeavour (Medium Dark Blue) */
-  
+
   --color-success: #10b981;     /* Industrial Green (Emerald) */
   --color-warning: #f59e0b;     /* Industrial Amber */
   --color-danger: #ef4444;      /* Industrial Red */
-  
-  /* VERY DARK GRITTY BACKGROUND */
-  --color-bg-base: #030508;     /* Almost pitch black/navy */
-  --color-bg-card: #0b121a;     /* Very dark blue-gray for content panels */
-  --color-bg-darker: #020305;   /* Vantablack void */
-  
-  --color-nav-bg: #1d3044;      /* Cloud Burst (User kept this for Nav/Sidebar) */
-  
-  --color-border-card: #1f364d; /* Slightly lighter than nav for borders */
-  
-  --color-text-muted: #6b849c;  
-  --color-text-dim: #3e5266;
-  
+
+  /* MEDIUM BLUE-GREY BACKGROUNDS */
+  --color-bg-base: #162638;     /* Medium dark blue-grey — main background */
+  --color-bg-card: #1e3248;     /* Slightly lighter blue-grey — content panels */
+  --color-bg-darker: #0f1e2e;   /* Deeper blue-grey — sunken areas */
+
+  --color-nav-bg: #1a2e44;      /* Blue-grey — nav & sidebar */
+
+  --color-border-card: #2a4a6a; /* Visible blue-grey border */
+
+  --color-text-muted: #ffffff;
+  --color-text-dim: #c8d8e8;
+
   --font-mono: "JetBrains Mono", "Fira Code", "Courier New", monospace;
 }
 
 @layer base {
   body {
     @apply bg-bg-base text-white font-mono selection:bg-primary/30 selection:text-primary;
-    background-image: 
-      linear-gradient(rgba(29, 48, 68, 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(29, 48, 68, 0.05) 1px, transparent 1px);
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
     background-size: 40px 40px;
   }
 }

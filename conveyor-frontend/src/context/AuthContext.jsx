@@ -21,12 +21,17 @@ export function AuthProvider({ children }) {
       try {
         const payloadBase64 = token.split(".")[1]
         const decodedPayload = JSON.parse(atob(payloadBase64))
-        setUser({
-          id: decodedPayload.sub || decodedPayload.id,
-          username: decodedPayload.username,
-          role: decodedPayload.role,
-          token: token,
-        })
+        // Reject tokens that are already expired
+        if (decodedPayload.exp && decodedPayload.exp * 1000 < Date.now()) {
+          localStorage.removeItem("access_token")
+        } else {
+          setUser({
+            id: decodedPayload.sub || decodedPayload.id,
+            username: decodedPayload.username,
+            role: decodedPayload.role,
+            token: token,
+          })
+        }
       } catch (error) {
         console.error("Invalid token:", error)
         localStorage.removeItem("access_token")
@@ -34,6 +39,7 @@ export function AuthProvider({ children }) {
     }
     setLoading(false)
   }, [])
+
   
   // Login function - called when user submits the login form
   async function login(username, password) {

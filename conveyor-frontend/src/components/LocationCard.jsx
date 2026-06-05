@@ -18,7 +18,7 @@ function LocationCard({ conveyor, runtime }) {
   return (
     <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl p-3 flex flex-col gap-2 overflow-hidden">
 
-      <p className="text-[8px] tracking-widest text-[var(--color-text-dim)]">
+      <p className="text-[11px] tracking-widest text-[var(--color-text-dim)]">
         CONVEYOR LOCATION
       </p>
 
@@ -40,7 +40,7 @@ function LocationCard({ conveyor, runtime }) {
         ].map(([key, val]) => (
           <div
             key={key}
-            className="flex justify-between items-center py-1 border-b border-[var(--color-border-card)] text-[9px]"
+            className="flex justify-between items-center py-1 border-b border-[var(--color-border-card)] text-[12px]"
           >
             <span className="text-[var(--color-text-dim)] tracking-wider">{key}</span>
             <span className="text-[#94a3b8] font-mono">{val}</span>
@@ -48,7 +48,7 @@ function LocationCard({ conveyor, runtime }) {
         ))}
 
         {/* Status row — no border bottom */}
-        <div className="flex justify-between items-center py-1 text-[9px]">
+        <div className="flex justify-between items-center py-1 text-[12px]">
           <span className="text-[var(--color-text-dim)] tracking-wider">STATUS</span>
           <span className="font-mono" style={{ color: statusColor }}>
             {statusText}
@@ -126,7 +126,7 @@ function LocationCard({ conveyor, runtime }) {
 
       {/* Runtime */}
       <div className="bg-[var(--color-bg-base)] border border-[var(--color-border-card)] rounded-lg px-3 py-2">
-        <p className="text-[8px] text-[var(--color-text-dim)] tracking-widest mb-1">
+        <p className="text-[11px] text-[var(--color-text-dim)] tracking-widest mb-1">
           RUNTIME TODAY
         </p>
         <p

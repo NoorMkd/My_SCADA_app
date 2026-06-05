@@ -27,25 +27,25 @@ function Navbar() {
       <div className="flex flex-col md:flex-row items-center gap-1 md:gap-3">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-success rounded-sm animate-pulse shadow-[0_0_8px_var(--color-success)]" />
-          <span className="text-white font-mono text-[13px] md:text-[13px] font-bold tracking-[0.2em] text-center">
+          <span className="text-white font-mono text-[16px] md:text-[16px] font-bold tracking-[0.2em] text-center">
             CONVEYOR / SCADA
           </span>
         </div>
         <span className="hidden md:inline text-border-card text-sm">|</span>
-        <span className="text-primary font-mono text-[9px] md:text-[10px] tracking-widest font-bold text-center">
+        <span className="text-primary font-mono text-[12px] md:text-[13px] tracking-widest font-bold text-center">
           {selected ? `UPLINK: ${selected.name.toUpperCase()} [${selected.zone}]` : "AWAITING LINK..."}
         </span>
       </div>
       <div className="flex items-center gap-2 md:gap-3 flex-wrap justify-center">
-        <span className={`font-mono text-[9px] border border-l-2 px-2 py-0.5 rounded-none ${roleColors[user?.role]}`}>
+        <span className={`font-mono text-[12px] border border-l-2 px-2 py-0.5 rounded-none ${roleColors[user?.role]}`}>
           {user?.role?.toUpperCase()}
         </span>
-        <span className="text-text-muted font-mono text-[10px] uppercase">
+        <span className="text-text-muted font-mono text-[13px] uppercase">
           {user?.username}
         </span>
         <button
           onClick={handleLogout}
-          className="bg-danger text-white hover:bg-red-700 font-mono text-[10px] uppercase px-3 py-1 rounded-sm border border-danger transition-colors duration-150"
+          className="bg-danger text-white hover:bg-red-700 font-mono text-[13px] uppercase px-3 py-1 rounded-sm border border-danger transition-colors duration-150"
         >
           DISCONNECT
         </button>

@@ -12,7 +12,7 @@
 function GaugeCard({ label, value, max, unit, warnAt, critAt, offline }) {
 
   // What % of the max is the current value?
-  const pct = offline ? 0 : Math.min(value / max, 1)
+  const pct = Math.min(value / max, 1) // Always show the real value, even if offline
 
   // Pick color based on status
   let color = "#39ff14"  // Neon Green
@@ -44,14 +44,14 @@ function GaugeCard({ label, value, max, unit, warnAt, critAt, offline }) {
   // Full background arc end point
   const [bgEndX, bgEndY] = polarToXY(startAngle + totalArc)
 
-  const displayValue = offline ? "--" : value
+  const displayValue = value // don't hide value when offline
 
   return (
     <div className="bg-bg-card border border-border-card rounded-sm p-4 flex flex-col items-center hover:border-text-dim transition-colors group"
          style={{ boxShadow: offline ? 'none' : `inset 0 0 20px ${color}05` }}>
 
       {/* Sensor name */}
-      <p className="text-[7px] font-bold tracking-[0.2em] text-text-muted mb-2 group-hover:text-primary transition-colors">{label}</p>
+      <p className="text-[10px] font-bold tracking-[0.2em] text-text-muted mb-2 group-hover:text-primary transition-colors">{label}</p>
 
       {/* SVG Gauge */}
       <svg viewBox="0 0 130 100" className="w-full">
@@ -59,7 +59,7 @@ function GaugeCard({ label, value, max, unit, warnAt, critAt, offline }) {
         {/* Background arc (gray track) */}
         <path
           d={`M ${startX} ${startY} A ${r} ${r} 0 1 1 ${bgEndX} ${bgEndY}`}
-          fill="none" stroke="#1a1a1a" strokeWidth={strokeW} strokeLinecap="square"
+          fill="none" stroke="#2a4a6a" strokeWidth={strokeW} strokeLinecap="square"
         />
 
         {/* Colored value arc */}
@@ -84,17 +84,17 @@ function GaugeCard({ label, value, max, unit, warnAt, critAt, offline }) {
         </text>
 
         {/* Unit label */}
-        <text x={cx} y={cy + 22} textAnchor="middle" fill={color} fillOpacity="0.4" fontSize="8" fontWeight="bold">
+        <text x={cx} y={cy + 22} textAnchor="middle" fill={color} fillOpacity="0.4" fontSize="11" fontWeight="bold">
           {unit}
         </text>
 
         {/* Min / Max labels */}
-        <text x="8" y="92" fill="#404040" fontSize="6">000</text>
-        <text x={max >= 100 ? 106 : 108} y="92" fill="#404040" fontSize="6">{max.toString().padStart(3, '0')}</text>
+        <text x="8" y="92" fill="#ffffff" fontWeight="bold" fontSize="9">000</text>
+        <text x={max >= 100 ? 106 : 108} y="92" fill="#ffffff" fontWeight="bold" fontSize="9">{max.toString().padStart(3, '0')}</text>
       </svg>
 
       {/* Status text */}
-      <p className="text-[9px] tracking-wider mt-1" style={{ color }}>{status}</p>
+      <p className="text-[12px] tracking-wider mt-1" style={{ color }}>{status}</p>
     </div>
   )
 }

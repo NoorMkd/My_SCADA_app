@@ -25,25 +25,28 @@ from app.auth import get_password_hash
 # ============================================================
 
 async def save_sensor_reading(db: AsyncSession, data: dict) -> SensorReading:
-    """
-    Saves one ESP32 message to the database.
-    Called by mqtt_handler.py every 5 seconds.
-    """
-    reading = SensorReading(
-        conveyor_id=data["conveyor_id"],
-        speed=data["speed"],
-        current=data["current"],
-        temperature=data["temperature"],
-        rpm=data.get("rpm"),
-        object_detected=data["object_detected"],
-        status=data["status"],
-        fault=data.get("fault"),
-    )
-    db.add(reading)
-    await db.commit()
-    await db.refresh(reading)
-    return reading
-
+    try:
+        reading = SensorReading(
+            conveyor_id=data["conveyor_id"],
+            speed=data["speed"],
+            current=data["current"],
+            temperature=data["temperature"],
+            rpm=data.get("rpm"),
+            object_detected=data["object_detected"],
+            status=data["status"],
+            fault=data.get("fault"),
+            belt_speed_mps=data.get("belt_speed_mps"),  # nullable — None when no item passed recently
+        )
+        db.add(reading)
+        await db.commit()
+        await db.refresh(reading)
+        print(f"[DB] ✓ Saved id={reading.id} at {reading.timestamp}")
+        return reading
+    except Exception as e:
+        await db.rollback()
+        print(f"[DB] ✗ Save FAILED: {type(e).__name__}: {e}")
+        import traceback; traceback.print_exc()
+        raise
 
 async def get_latest_reading(
     db: AsyncSession,
@@ -172,22 +175,34 @@ async def create_alert(
 async def get_all_alerts(
     db: AsyncSession,
     conveyor_id: int | None = None,
-    limit: int = 15,
+    limit: int = 50,
 ) -> list[FaultAlert]:
     """
-    Returns the most recent N alerts.
+    Returns alerts with two-tier retention:
+    - Critical alerts: no limit — permanent event history, never pushed out
+    - Warning alerts:  capped at `limit` most recent entries
     """
-    query = (
+    def apply_conveyor(q):
+        return q.where(FaultAlert.conveyor_id == conveyor_id) if conveyor_id is not None else q
+
+    crit_q = apply_conveyor(
         select(FaultAlert)
+        .where(FaultAlert.level == "critical")
+        .order_by(FaultAlert.timestamp.desc())
+    )
+    warn_q = apply_conveyor(
+        select(FaultAlert)
+        .where(FaultAlert.level == "warning")
         .order_by(FaultAlert.timestamp.desc())
         .limit(limit)
     )
 
-    if conveyor_id is not None:
-        query = query.where(FaultAlert.conveyor_id == conveyor_id)
+    criticals = list((await db.execute(crit_q)).scalars().all())
+    warnings  = list((await db.execute(warn_q)).scalars().all())
 
-    result = await db.execute(query)
-    return list(result.scalars().all())
+    combined = criticals + warnings
+    combined.sort(key=lambda a: a.timestamp, reverse=True)
+    return combined
 
 
 async def resolve_alert(

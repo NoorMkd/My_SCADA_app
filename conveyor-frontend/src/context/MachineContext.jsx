@@ -2,7 +2,7 @@
 // Now handles MULTIPLE conveyors instead of just one
 // Each conveyor has its own sensors, state, and alerts
 
-import { createContext, useContext, useState, useEffect } from "react"
+import { createContext, useContext, useState, useEffect, useRef } from "react"
 
 const MachineContext = createContext()
 
@@ -25,6 +25,8 @@ export function MachineProvider({ children }) {
       itemsToday: 0,
       dailyTarget: 0,
       runtimeSeconds: 0,
+      rpm: null,
+      freq_hz: null,
     },
     {
       id: 2,
@@ -37,9 +39,11 @@ export function MachineProvider({ children }) {
       speed: 0,
       sensors: { temperature: 0, current: 0 },
       fault: null,
-      itemsToday: 74,
-      dailyTarget: 300,
+      itemsToday: 0,
+      dailyTarget: 0,
       runtimeSeconds: 0,
+      rpm: null,
+      freq_hz: null,
     },
     {
       id: 3,
@@ -48,23 +52,30 @@ export function MachineProvider({ children }) {
       section: "Section 03",
       motor: "CV3-M01",
       bay: "Bay 03 — South",
-      isRunning: true,
-      speed: 70,
-      sensors: { temperature: 78, current: 16 },
+      isRunning: false,
+      speed: 0,
+      sensors: { temperature: 0, current: 0 },
       fault: null,
-      itemsToday: 201,
-      dailyTarget: 300,
-      runtimeSeconds: 26043, // 07:14:03
+      itemsToday: 0,
+      dailyTarget: 0,
+      runtimeSeconds: 0,
+      belt_speed_mps: null,
+      freq_hz: null,
     },
   ])
 
   // Which conveyor is currently selected on the dashboard
   const [selectedId, setSelectedId] = useState(1)
 
+  // Tracks when a start/stop command was last sent per conveyor id.
+  // While the lock is active the SSE handler won't override isRunning,
+  // giving the ESP32 up to 5 s to physically respond before SSE corrects state.
+  const commandLockRef = useRef({})
+
   // Thresholds — if sensor goes above these → alert
   const THRESHOLDS = {
-    temperature: { warning: 30, critical: 31.5 },
-    current:     { warning: 14, critical: 18 },
+    temperature: { warning: 45, critical: 70 },
+    current:     { warning: 2.2, critical: 2.5 },
   }
 
   // Helper: get one conveyor by its id
@@ -81,28 +92,67 @@ export function MachineProvider({ children }) {
   }
 
   // Start a conveyor
-  function startConveyor(id) {
+  async function startConveyor(id) {
     updateConveyor(id, "isRunning", true)
+    commandLockRef.current[id] = Date.now() + 5000 // block SSE override for 5 s
+    try {
+      const token = localStorage.getItem("access_token")
+      await fetch(`/api/conveyor/${id}/start`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+    } catch (e) {
+      updateConveyor(id, "isRunning", false)
+      delete commandLockRef.current[id]
+      console.error("Failed to start conveyor:", e)
+    }
   }
 
   // Stop a conveyor
-  function stopConveyor(id) {
+  async function stopConveyor(id) {
     updateConveyor(id, "isRunning", false)
-    updateConveyor(id, "speed", 0)
+    commandLockRef.current[id] = Date.now() + 5000 // block SSE override for 5 s
+    try {
+      const token = localStorage.getItem("access_token")
+      await fetch(`/api/conveyor/${id}/stop`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+    } catch (e) {
+      updateConveyor(id, "isRunning", true)
+      delete commandLockRef.current[id]
+      console.error("Failed to stop conveyor:", e)
+    }
   }
 
-  // Increase speed of a conveyor by 10, max 100
-  function increaseSpeed(id) {
+  async function increaseSpeed(id) {
     const cv = getConveyor(id)
     if (!cv || !cv.isRunning) return
-    updateConveyor(id, "speed", Math.min(cv.speed + 10, 100))
+    updateConveyor(id, "speed", Math.min(cv.speed + 5, 100))
+    try {
+      const token = localStorage.getItem("access_token")
+      await fetch(`/api/conveyor/${id}/speed?direction=up`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+    } catch (e) {
+      console.error("Failed to increase speed:", e)
+    }
   }
 
-  // Decrease speed by 10, min 0
-  function decreaseSpeed(id) {
+  async function decreaseSpeed(id) {
     const cv = getConveyor(id)
-    if (!cv) return
-    updateConveyor(id, "speed", Math.max(cv.speed - 10, 0))
+    if (!cv || !cv.isRunning) return
+    updateConveyor(id, "speed", Math.max(cv.speed - 5, 0))
+    try {
+      const token = localStorage.getItem("access_token")
+      await fetch(`/api/conveyor/${id}/speed?direction=down`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+    } catch (e) {
+      console.error("Failed to decrease speed:", e)
+    }
   }
 
   // Calculate alerts for a conveyor based on its sensor values
@@ -170,6 +220,28 @@ export function MachineProvider({ children }) {
   // alertsHistory: full log of every alert that ever happened
   const [alertsHistory, setAlertsHistory] = useState([])
 
+  // Tracks which alerts are currently active per conveyor to avoid duplicate saves.
+  // Key format: "conveyorId|alertMessage"
+  const activeAlertsRef = useRef({})
+
+  // POST a new alert to the backend — called exactly once per rising edge
+  async function postAlert(conveyor_id, message, level) {
+    try {
+      const token = localStorage.getItem("access_token")
+      await fetch(`/api/alerts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ conveyor_id, message, level })
+      })
+      fetchAlerts()
+    } catch (e) {
+      console.error("Failed to save alert:", e)
+    }
+  }
+
   // Fetch alerts from backend
   const fetchAlerts = async () => {
     try {
@@ -195,6 +267,8 @@ export function MachineProvider({ children }) {
   const fetchCurrentSnapshot = async () => {
     try {
       const token = localStorage.getItem("access_token")
+
+      // Fetch latest machine state
       const res = await fetch(`/api/conveyor/1/latest`, {
         headers: { "Authorization": `Bearer ${token}` }
       })
@@ -205,11 +279,6 @@ export function MachineProvider({ children }) {
             return {
               ...c,
               isRunning: liveData.is_running,
-              speed: liveData.speed,
-              sensors: {
-                temperature: liveData.temperature,
-                current: liveData.current,
-              },
               itemsToday: liveData.items_today || 0,
               dailyTarget: liveData.daily_target || c.dailyTarget,
               runtimeSeconds: liveData.runtime_seconds || 0,
@@ -218,6 +287,20 @@ export function MachineProvider({ children }) {
           return c
         }))
       }
+
+      // Fetch latest AI prediction for all conveyors so we don't start empty
+      const predRes = await fetch(`/api/conveyor/1/predictions/latest`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+      if (predRes.ok) {
+        const predData = await predRes.json()
+        if (!predData.error) {
+          setconveyors(prev => prev.map(c => 
+            c.id === 1 ? { ...c, aiPrediction: predData } : c
+          ))
+        }
+      }
+
     } catch (e) {
       console.error("Failed to fetch initial conveyor snapshot:", e)
     }
@@ -282,7 +365,31 @@ export function MachineProvider({ children }) {
     }
   }
 
- useEffect(() => {
+ // Rising-edge alert detection: fires whenever sensor data updates via SSE.
+  // Saves each alert to the backend exactly once when it first appears,
+  // and removes it from the ref when the condition clears (so it can be re-saved if it returns).
+  useEffect(() => {
+    conveyors.forEach(cv => {
+      const current = getAlerts(cv).filter(a => a.level === "critical" || a.level === "warning")
+      const currentKeys = new Set(current.map(a => `${cv.id}|${a.msg}`))
+
+      current.forEach(alert => {
+        const key = `${cv.id}|${alert.msg}`
+        if (!activeAlertsRef.current[key]) {
+          activeAlertsRef.current[key] = true
+          postAlert(cv.id, alert.msg, alert.level)
+        }
+      })
+
+      Object.keys(activeAlertsRef.current)
+        .filter(k => k.startsWith(`${cv.id}|`))
+        .forEach(key => {
+          if (!currentKeys.has(key)) delete activeAlertsRef.current[key]
+        })
+    })
+  }, [conveyors]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
     // Connect to the backend stream using relative path
     // This allows it to work on mobile via your network IP
     const eventSource = new EventSource("/api/stream")
@@ -290,28 +397,47 @@ export function MachineProvider({ children }) {
     // Listen for new messages from the backend
     eventSource.onmessage = (event) => {
       const liveData = JSON.parse(event.data)
-      console.log("SSE Received:", liveData) // Added for debugging
+      console.log("SSE:", liveData.conveyor_id, "items:", liveData.items_today)
       
-      // Auto-refresh alerts whenever new data comes in
-      fetchAlerts()
+      // Handle ML prediction broadcast separately
+      if (liveData.type === "prediction") {
+        console.log("SSE Prediction Update:", liveData.prediction);
+        setconveyors(prev => prev.map(c => 
+          Number(c.id) === Number(liveData.conveyor_id) 
+            ? { ...c, aiPrediction: liveData.prediction } 
+            : c
+        ))
+        // If it's a critical AI alert, add to live alerts history!
+        if (liveData.prediction.anomaly?.label === "CRITICAL") {
+           postAlert(liveData.conveyor_id, "AI Alert: Critical Anomaly Detected!", "critical");
+        }
+        return;
+      }
       
       // Look for the specific conveyor (e.g. Conveyor 1)
       setconveyors(prev => prev.map(c => {
-        // Ensure both IDs are numbers for a safe comparison
         if (Number(c.id) === Number(liveData.conveyor_id)) {
-          // Merge the real backend data into our React state!
+          // If a start/stop command was sent recently, keep our optimistic
+          // isRunning value — don't let a stale SSE tick undo the button click
+          // before the ESP32 has had time to physically respond.
+          const locked = (commandLockRef.current[c.id] ?? 0) > Date.now()
           return {
             ...c,
-            isRunning: liveData.is_running,
-            speed: liveData.speed,
+            isRunning: locked
+              ? c.isRunning
+              : (liveData.is_running !== undefined ? liveData.is_running : c.isRunning),
+            speed: liveData.speed ?? c.speed,
             sensors: {
-              temperature: liveData.temperature,
-              current: liveData.current,
+              temperature: liveData.temperature ?? c.sensors.temperature,
+              current: liveData.current ?? c.sensors.current,
             },
-            fault: liveData.fault,
-            itemsToday: liveData.items_today,
+            fault: liveData.fault !== undefined ? liveData.fault : c.fault,
+            itemsToday: liveData.items_today ?? c.itemsToday,
             dailyTarget: liveData.daily_target || c.dailyTarget,
-            runtimeSeconds: liveData.runtime_seconds,
+            runtimeSeconds: liveData.runtime_seconds ?? c.runtimeSeconds,
+            // null is a valid value here (no item passed) — use !== undefined, not ??
+            rpm: liveData.rpm !== undefined ? liveData.rpm : c.rpm,
+            freq_hz:        liveData.freq_hz        !== undefined ? liveData.freq_hz        : c.freq_hz,
           }
         }
         return c

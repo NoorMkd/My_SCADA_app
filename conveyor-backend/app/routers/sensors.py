@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.sse_manager import sse_manager
-from app.schemas import TechLogIn
+from app.schemas import TechLogIn, AlertIn
 from app import crud
 from app.ml_engine import generate_report
 from app.mqtt_handler import publish_command
@@ -88,13 +88,16 @@ async def get_latest(
     session and passes it here — we don't manage it manually.
     """
     reading = await crud.get_latest_reading(db, conveyor_id)
-    config = await crud.get_production_config(db)
+    config  = await crud.get_production_config(db)
 
     if not reading:
         raise HTTPException(
             status_code=404,
             detail=f"No data yet for conveyor {conveyor_id}. Is the ESP32 running?"
         )
+
+    items_today     = await crud.count_items_today(db, conveyor_id)
+    runtime_seconds = await crud.count_runtime_seconds(db, conveyor_id)
 
     return {
         "conveyor_id":      reading.conveyor_id,
@@ -107,7 +110,9 @@ async def get_latest(
         "status":           reading.status,
         "fault":            reading.fault,
         "is_running":       reading.status == "running",
+        "items_today":      items_today,
         "daily_target":     config.todays_target if config else 300,
+        "runtime_seconds":  runtime_seconds,
     }
 
 
@@ -118,10 +123,10 @@ async def start_motor(
     conveyor_id: int,
     current_user = Depends(get_current_user)
 ):
-    """Tell ESP32 to start the motor via MQTT"""
-    success = publish_command({"command": "start"})
+    """Tell ESP32 to start the motor — publishes plain string 'start'"""
+    success = publish_command("start")
     if not success:
-        raise HTTPException(status_code=500, detail="Failed to publish MQTT command")
+        raise HTTPException(status_code=500, detail="MQTT not connected")
     return {"status": "ok", "message": "Command sent"}
 
 @router.post("/conveyor/{conveyor_id}/stop")
@@ -129,22 +134,27 @@ async def stop_motor(
     conveyor_id: int,
     current_user = Depends(get_current_user)
 ):
-    """Tell ESP32 to stop the motor via MQTT"""
-    success = publish_command({"command": "stop"})
+    """Tell ESP32 to stop the motor — publishes plain string 'stop'"""
+    success = publish_command("stop")
     if not success:
-        raise HTTPException(status_code=500, detail="Failed to publish MQTT command")
+        raise HTTPException(status_code=500, detail="MQTT not connected")
     return {"status": "ok", "message": "Command sent"}
 
 @router.post("/conveyor/{conveyor_id}/speed")
 async def set_motor_speed(
     conveyor_id: int,
-    rpm: float,
+    direction: str,
     current_user = Depends(get_current_user)
 ):
-    """Tell ESP32 to change motor speed via MQTT"""
-    success = publish_command({"command": "speed", "rpm": rpm})
+    """
+    Tell ESP32 to adjust speed.
+    direction = 'up'   → publishes 'increase_speed'
+    direction = 'down' → publishes 'decrease_speed'
+    """
+    cmd = "increase_speed" if direction == "up" else "decrease_speed"
+    success = publish_command(cmd)
     if not success:
-        raise HTTPException(status_code=500, detail="Failed to publish MQTT command")
+        raise HTTPException(status_code=500, detail="MQTT not connected")
     return {"status": "ok", "message": "Command sent"}
 
 @router.get("/history/{conveyor_id}")
@@ -204,6 +214,28 @@ async def get_alerts(
         }
         for a in alerts
     ]
+
+
+@router.post("/alerts", status_code=201)
+async def create_alert(
+    alert: AlertIn,
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """
+    POST /api/alerts
+    Called by the React dashboard when a sensor threshold is crossed.
+    Frontend owns all threshold logic — backend just persists the record.
+    """
+    result = await crud.create_alert(db, alert.conveyor_id, alert.message, alert.level)
+    return {
+        "id":          result.id,
+        "conveyor_id": result.conveyor_id,
+        "message":     result.message,
+        "level":       result.level,
+        "resolved":    result.resolved,
+        "timestamp":   result.timestamp.isoformat(),
+    }
 
 
 @router.patch("/alerts/{alert_id}/resolve")

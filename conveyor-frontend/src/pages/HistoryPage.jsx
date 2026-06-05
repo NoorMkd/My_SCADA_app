@@ -159,13 +159,17 @@ function HistoryPage() {
   // Which conveyor is selected
   const [selectedId, setSelectedId] = useState(1)
 
+  // Read the selected conveyor and its SSE-driven AI prediction directly from MachineContext
+  const cv = conveyors.find(c => c.id === selectedId)
+  const aiPrediction = cv?.aiPrediction || null
+
   // Event history state
   const [eventLogs, setEventLogs] = useState([])
 
   const fetchEventLogs = async () => {
     try {
       const token = localStorage.getItem("access_token")
-      
+
       // Fetch tech logs
       const techRes = await fetch(`/api/techlogs?conveyor_id=${selectedId}`, {
         headers: { "Authorization": `Bearer ${token}` }
@@ -216,8 +220,60 @@ function HistoryPage() {
   // Refresh animation state
   const [spinning, setSpinning] = useState(false)
 
-  const data = AI_DATA[selectedId]
-  const cv   = conveyors.find(c => c.id === selectedId)
+  let data = AI_DATA[selectedId]
+
+  if (aiPrediction) {
+    const oeeScore = (aiPrediction.oee.score * 100).toFixed(0) || 0
+    let color = "#0098c2"
+    if (oeeScore < 60) color = "#cd6413"
+    else if (oeeScore < 80) color = "#d5a507"
+
+    let explanation = ""
+    if (aiPrediction.anomaly.label !== "NORMAL") {
+      explanation += `Anomaly detected: ${aiPrediction.anomaly.explanation}. `
+    }
+    explanation += `${aiPrediction.oee.explanation} `
+    if (aiPrediction.rul.label !== "HEALTHY") {
+      explanation += `RUL Alert: ${aiPrediction.rul.explanation} `
+    }
+
+    data = {
+      ...data,
+      efficiencyScore: oeeScore,
+      efficiencyLabel: aiPrediction.anomaly.label === "NORMAL" ? "GOOD EFFICIENCY" : aiPrediction.anomaly.label,
+      efficiencyColor: color,
+      explanation: explanation,
+      losses: {
+        sevenDays: { pct: "0.0%", DT: `${aiPrediction.oee.items_lost || 0} items lost` },
+        thirtyDays: { pct: `RUL: ${aiPrediction.rul.days} days`, DT: aiPrediction.rul.label },
+      },
+      recommendations: [
+        {
+          num: "①",
+          action: "Maintenance",
+          impact: aiPrediction.maintenance.recommendation,
+          save: "—",
+          color: "#0098c2",
+          bg: "var(--color-bg-base)",
+          border: "#0098c233",
+        },
+        {
+          num: "②",
+          action: "Alert Forecast",
+          impact: aiPrediction.alert.recommendation,
+          save: "—",
+          color: aiPrediction.alert.label === "HIGH" ? "#cd6413" : "#d5a507",
+          bg: "var(--color-bg-base)",
+          border: "#d5a50733",
+        }
+      ],
+      anomalyScore:    { score: aiPrediction.anomaly.score },
+      rul:             { days: aiPrediction.rul.days },
+      alertForecast:   { count: aiPrediction.alert.count },
+      productionScore: { score: oeeScore },
+      maintenanceScore:{ days: aiPrediction.maintenance.days_since_last },
+    }
+  }
 
   // Today formatted
   const today = new Date().toLocaleDateString("en-GB", {
@@ -263,10 +319,10 @@ function HistoryPage() {
           {/* ── HEADER ── */}
           <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl px-5 py-4 flex flex-col md:flex-row items-center justify-between gap-4 flex-shrink-0">
             <div className="w-full md:w-auto text-center md:text-left">
-              <p className="text-[var(--color-primary)] font-mono text-[12px] tracking-[3px] font-bold">
+              <p className="text-[var(--color-primary)] font-mono text-[15px] tracking-[3px] font-bold">
                 ◈ HISTORY & AI PREDICTIONS
               </p>
-              <p className="text-[var(--color-text-dim)] font-mono text-[9px] tracking-widest mt-1">
+              <p className="text-[var(--color-text-dim)] font-mono text-[15px] tracking-widest mt-1">
                 CONVEYOR SYSTEM · TODAY: {today}
               </p>
             </div>
@@ -277,7 +333,7 @@ function HistoryPage() {
                 <button
                   key={c.id}
                   onClick={() => setSelectedId(c.id)}
-                  className="font-mono text-[9px] px-4 py-2 rounded-full border transition-all duration-200"
+                  className="font-mono text-[15px] px-4 py-2 rounded-full border transition-all duration-200"
                   style={{
                     borderColor: selectedId === c.id ? "var(--color-primary)55" : "var(--color-border-card)",
                     color:       selectedId === c.id ? "var(--color-primary)"   : "var(--color-text-dim)",
@@ -292,7 +348,7 @@ function HistoryPage() {
             {/* Refresh button */}
             <button
               onClick={handleRefresh}
-              className="bg-[#0a1320] border border-[var(--color-primary)55] rounded-xl text-[var(--color-primary)] font-mono text-[10px] tracking-widest px-5 py-2.5 cursor-pointer hover:bg-[var(--color-primary)22] transition-colors duration-200 flex items-center gap-2"
+              className="bg-[#0a1320] border border-[var(--color-primary)55] rounded-xl text-[var(--color-primary)] font-mono text-[16px] tracking-widest px-5 py-2.5 cursor-pointer hover:bg-[var(--color-primary)22] transition-colors duration-200 flex items-center gap-2"
             >
               <span
                 className="text-sm inline-block"
@@ -313,25 +369,25 @@ function HistoryPage() {
             {/* ── LEFT: Event History (No Filters) ── */}
             <div className="flex-1 lg:flex-[1.8] bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl flex flex-col overflow-hidden">
               <div className="p-5 border-b border-[var(--color-border-card)]">
-                <p className="text-[#94a3b8] font-mono text-[12px] tracking-[3px]">
+                <p className="text-[#94a3b8] font-mono text-[15px] tracking-[3px]">
                   ◈ EVENT HISTORY
                 </p>
               </div>
 
               {/* Table Header */}
               <div className="hidden md:grid grid-cols-5 gap-4 px-5 py-3 border-b border-[var(--color-border-card)] bg-[var(--color-bg-base)]">
-                <div className="text-[#94a3b8] text-[10px] font-mono tracking-widest">DATE / TIME</div>
-                <div className="text-[#94a3b8] text-[10px] font-mono tracking-widest">TYPE</div>
-                <div className="text-[#94a3b8] text-[10px] font-mono tracking-widest">DESCRIPTION</div>
-                <div className="text-[#94a3b8] text-[10px] font-mono tracking-widest">SENSORS</div>
-                <div className="text-[#94a3b8] text-[10px] font-mono tracking-widest">VALUES</div>
+                <div className="text-[#94a3b8] text-[16px] font-mono tracking-widest">DATE / TIME</div>
+                <div className="text-[#94a3b8] text-[16px] font-mono tracking-widest">TYPE</div>
+                <div className="text-[#94a3b8] text-[16px] font-mono tracking-widest">DESCRIPTION</div>
+                <div className="text-[#94a3b8] text-[16px] font-mono tracking-widest">SENSORS</div>
+                <div className="text-[#94a3b8] text-[16px] font-mono tracking-widest">VALUES</div>
               </div>
 
               {/* Table Body */}
               <div className="flex-1 overflow-auto p-2 md:p-5 space-y-4">
                 {eventLogs.length === 0 ? (
                   <div className="text-center py-10">
-                    <p className="text-[var(--color-text-dim)] font-mono text-[10px] tracking-widest">
+                    <p className="text-[var(--color-text-dim)] font-mono text-[16px] tracking-widest">
                       NO EVENT RECORDS FOUND IN DATABASE
                     </p>
                   </div>
@@ -343,17 +399,17 @@ function HistoryPage() {
                     
                     return (
                       <div key={log.id} className="flex flex-col md:grid md:grid-cols-5 gap-2 md:gap-4 md:items-center border-b border-[var(--color-border-card)] pb-4">
-                        <div className="text-[12px] font-mono flex justify-between md:block">
-                          <span className="md:hidden text-[#94a3b8] tracking-widest text-[10px]">TIME:</span>
+                        <div className="text-[15px] font-mono flex justify-between md:block">
+                          <span className="md:hidden text-[#94a3b8] tracking-widest text-[16px]">TIME:</span>
                           <div>
                             <p className="text-[#94a3b8]">{dateStr}</p>
                             <p className="text-[var(--color-text-dim)] mt-1">{timeStr}</p>
                           </div>
                         </div>
-                        <div className={`font-mono text-[11px] ${log.type === "CRITICAL ALERT" ? "text-[var(--color-danger)]" : "text-[#cbd5e1]"}`}>{log.type}</div>
-                        <div className="text-[#94a3b8] text-[12px] pr-4">{log.text}</div>
-                        <div className="text-[var(--color-text-dim)] font-mono text-[11px]">—</div>
-                        <div className="text-[var(--color-text-dim)] font-mono text-[11px]">Logged by {log.author}</div>
+                        <div className={`font-mono text-[14px] ${log.type === "CRITICAL ALERT" ? "text-[var(--color-danger)]" : "text-[#cbd5e1]"}`}>{log.type}</div>
+                        <div className="text-[#94a3b8] text-[15px] pr-4">{log.text}</div>
+                        <div className="text-[var(--color-text-dim)] font-mono text-[14px]">—</div>
+                        <div className="text-[var(--color-text-dim)] font-mono text-[14px]">Logged by {log.author}</div>
                       </div>
                     )
                   })
@@ -368,7 +424,7 @@ function HistoryPage() {
               <div className="bg-[var(--color-bg-card)] max-w-full panel-border border-[var(--color-border-card)] p-4 flex-shrink-0 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-none bg-[var(--color-primary)] animate-pulse"></div>
-                  <p className="text-[10px] tracking-[3px] text-white font-mono font-bold uppercase">
+                  <p className="text-[16px] tracking-[3px] text-white font-mono font-bold uppercase">
                     AI Intelligence Module
                   </p>
                 </div>
@@ -382,14 +438,14 @@ function HistoryPage() {
               {/* 1. Anomaly Score */}
               <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] p-5 flex flex-col gap-2">
                 <div>
-                  <p className="text-[10px] tracking-[2px] text-[var(--color-primary)] font-mono mb-1 font-semibold uppercase">
+                  <p className="text-[16px] tracking-[2px] text-[var(--color-primary)] font-mono mb-1 font-semibold uppercase">
                     Anomaly Score
                   </p>
                   <p className="text-2xl font-mono text-[#e2e8f0] font-bold">
                     {data.anomalyScore?.score !== undefined ? `${data.anomalyScore.score} / 100` : "12 / 100"}
                   </p>
                 </div>
-                <p className="text-[10px] text-[#94a3b8] font-mono tracking-widest mt-2 uppercase">
+                <p className="text-[16px] text-[#94a3b8] font-mono tracking-widest mt-2 uppercase">
                   Multi-sensor abnormality detection score.
                 </p>
               </div>
@@ -397,14 +453,14 @@ function HistoryPage() {
               {/* 2. RUL — Remaining Useful Life */}
               <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] p-5 flex flex-col gap-2">
                 <div>
-                  <p className="text-[10px] tracking-[2px] text-[var(--color-primary)] font-mono mb-1 font-semibold uppercase">
+                  <p className="text-[16px] tracking-[2px] text-[var(--color-primary)] font-mono mb-1 font-semibold uppercase">
                     Remaining Useful Life
                   </p>
                   <p className="text-2xl font-mono text-[#e2e8f0] font-bold">
                     {data.rul?.days !== undefined ? `~ ${data.rul.days} DAYS` : "~ 18 DAYS"}
                   </p>
                 </div>
-                <p className="text-[10px] text-[#94a3b8] font-mono tracking-widest mt-2 uppercase">
+                <p className="text-[16px] text-[#94a3b8] font-mono tracking-widest mt-2 uppercase">
                   Estimated time before motor reaches critical threshold.
                 </p>
               </div>
@@ -412,14 +468,14 @@ function HistoryPage() {
               {/* 3. Alert Forecast */}
               <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] p-5 flex flex-col gap-2">
                 <div>
-                  <p className="text-[10px] tracking-[2px] text-[var(--color-primary)] font-mono mb-1 font-semibold uppercase">
+                  <p className="text-[16px] tracking-[2px] text-[var(--color-primary)] font-mono mb-1 font-semibold uppercase">
                     Alert Forecast (24H)
                   </p>
                   <p className="text-2xl font-mono text-[#e2e8f0] font-bold">
                     {data.alertForecast?.count !== undefined ? `${data.alertForecast.count} ALERTS` : "3 ALERTS"}
                   </p>
                 </div>
-                <p className="text-[10px] text-[#94a3b8] font-mono tracking-widest mt-2 uppercase">
+                <p className="text-[16px] text-[#94a3b8] font-mono tracking-widest mt-2 uppercase">
                   Predicted occurrences based on recent sensor trends.
                 </p>
               </div>
@@ -427,14 +483,14 @@ function HistoryPage() {
               {/* 4. Production Efficiency */}
               <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] p-5 flex flex-col gap-2">
                 <div>
-                  <p className="text-[10px] tracking-[2px] text-[var(--color-primary)] font-mono mb-1 font-semibold uppercase">
+                  <p className="text-[16px] tracking-[2px] text-[var(--color-primary)] font-mono mb-1 font-semibold uppercase">
                     Production Efficiency
                   </p>
                   <p className="text-2xl font-mono text-[#e2e8f0] font-bold">
                     {data.productionScore?.score !== undefined ? `${data.productionScore.score}%` : "84%"}
                   </p>
                 </div>
-                <p className="text-[10px] text-[#94a3b8] font-mono tracking-widest mt-2 uppercase">
+                <p className="text-[16px] text-[#94a3b8] font-mono tracking-widest mt-2 uppercase">
                   Current throughput scaled against theoretical maximum capacity.
                 </p>
               </div>
@@ -442,21 +498,21 @@ function HistoryPage() {
               {/* 5. Maintenance Due Score */}
               <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] p-5 flex flex-col gap-2">
                 <div>
-                  <p className="text-[10px] tracking-[2px] text-[var(--color-primary)] font-mono mb-1 font-semibold uppercase">
+                  <p className="text-[16px] tracking-[2px] text-[var(--color-primary)] font-mono mb-1 font-semibold uppercase">
                     Maintenance Due Score
                   </p>
                   <p className="text-2xl font-mono text-[#e2e8f0] font-bold">
                     {data.maintenanceScore?.days !== undefined ? `${data.maintenanceScore.days} DAYS` : "47 DAYS"}
                   </p>
                 </div>
-                <p className="text-[10px] text-[#94a3b8] font-mono tracking-widest mt-2 uppercase">
+                <p className="text-[16px] text-[#94a3b8] font-mono tracking-widest mt-2 uppercase">
                   Days elapsed since the last scheduled preventive logs.
                 </p>
               </div>
 
               {/* Sensor trends chart (Moved to Right Panel) */}
               <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl p-5 flex flex-col flex-shrink-0">
-                <p className="text-[8px] tracking-[3px] text-[var(--color-text-dim)] mb-4">
+                <p className="text-[14px] tracking-[3px] text-[var(--color-text-dim)] mb-4">
                   SENSOR TRENDS — LAST 7 DAYS
                 </p>
                 <svg viewBox="0 0 330 80" className="w-full">
@@ -466,19 +522,19 @@ function HistoryPage() {
                   <line x1="30" y1="20" x2="315" y2="20" stroke="#0d1828" strokeWidth="0.5"/>
                   <line x1="30" y1="35" x2="315" y2="35" stroke="#0d1828" strokeWidth="0.5"/>
                   {/* Y labels */}
-                  <text x="24" y="9"  textAnchor="end" fill="var(--color-text-dim)" fontSize="6" fontFamily="monospace">HIGH</text>
-                  <text x="24" y="39" textAnchor="end" fill="var(--color-text-dim)" fontSize="6" fontFamily="monospace">MID</text>
+                  <text x="24" y="9"  textAnchor="end" fill="var(--color-text-dim)" fontSize="9" fontFamily="monospace">HIGH</text>
+                  <text x="24" y="39" textAnchor="end" fill="var(--color-text-dim)" fontSize="9" fontFamily="monospace">MID</text>
                   {/* Day labels */}
                   {data.sensorTrend.map((d, i) => (
                     <text key={i} x={xStart + i * xStep} y="66"
-                      textAnchor="middle" fill="var(--color-text-dim)" fontSize="6" fontFamily="monospace">
+                      textAnchor="middle" fill="var(--color-text-dim)" fontSize="9" fontFamily="monospace">
                       {d.day}
                     </text>
                   ))}
                   {/* Limit reference line */}
                   <line x1="30" y1="12" x2="315" y2="12"
                     stroke="#cd641355" strokeWidth="1" strokeDasharray="3,3"/>
-                  <text x="317" y="14" fill="#cd6413" fontSize="5" fontFamily="monospace">LIM</text>
+                  <text x="317" y="14" fill="#cd6413" fontSize="8" fontFamily="monospace">LIM</text>
                   {/* Temperature line */}
                   <polyline points={tempPoints}
                     fill="none" stroke="#cd6413" strokeWidth="1.8"
@@ -502,7 +558,7 @@ function HistoryPage() {
                   ].map(([color, label]) => (
                     <div key={label} className="flex items-center gap-1.5">
                       <div className="w-4 h-0.5 rounded" style={{ background: color }}/>
-                      <span className="text-[7.5px] text-[var(--color-text-dim)]">{label}</span>
+                      <span className="text-[16px] text-[var(--color-text-dim)]">{label}</span>
                     </div>
                   ))}
                 </div>
@@ -510,7 +566,7 @@ function HistoryPage() {
 
               {/* Efficiency trend chart (Moved to Right Panel) */}
               <div className="bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl p-5 flex flex-col flex-shrink-0">
-                <p className="text-[8px] tracking-[3px] text-[var(--color-text-dim)] mb-4">
+                <p className="text-[14px] tracking-[3px] text-[var(--color-text-dim)] mb-4">
                   EFFICIENCY SCORE — LAST 7 DAYS
                 </p>
                 <svg viewBox="0 0 330 70" className="w-full">
@@ -519,9 +575,9 @@ function HistoryPage() {
                   <line x1="30" y1="48" x2="315" y2="48" stroke="var(--color-border-card)" strokeWidth="0.5"/>
                   <line x1="30" y1="20" x2="315" y2="20" stroke="#0d1828" strokeWidth="0.5"/>
                   <line x1="30" y1="34" x2="315" y2="34" stroke="#0d1828" strokeWidth="0.5"/>
-                  <text x="24" y="9"  textAnchor="end" fill="var(--color-text-dim)" fontSize="6" fontFamily="monospace">100</text>
-                  <text x="24" y="24" textAnchor="end" fill="var(--color-text-dim)" fontSize="6" fontFamily="monospace">75</text>
-                  <text x="24" y="38" textAnchor="end" fill="var(--color-text-dim)" fontSize="6" fontFamily="monospace">50</text>
+                  <text x="24" y="9"  textAnchor="end" fill="var(--color-text-dim)" fontSize="9" fontFamily="monospace">100</text>
+                  <text x="24" y="24" textAnchor="end" fill="var(--color-text-dim)" fontSize="9" fontFamily="monospace">75</text>
+                  <text x="24" y="38" textAnchor="end" fill="var(--color-text-dim)" fontSize="9" fontFamily="monospace">50</text>
                   {/* Filled area */}
                   <polygon
                     points={`${effPoints} 290,48 50,48`}
@@ -540,11 +596,11 @@ function HistoryPage() {
                       <g key={i}>
                         <circle cx={x} cy={y} r="3" fill={dotColor}/>
                         <text x={x} y={y - 6} textAnchor="middle"
-                          fill={dotColor} fontSize="6" fontFamily="monospace">
+                          fill={dotColor} fontSize="9" fontFamily="monospace">
                           {v}
                         </text>
                         <text x={x} y="60" textAnchor="middle"
-                          fill="var(--color-text-dim)" fontSize="6" fontFamily="monospace">
+                          fill="var(--color-text-dim)" fontSize="9" fontFamily="monospace">
                           {data.sensorTrend[i]?.day}
                         </text>
                       </g>

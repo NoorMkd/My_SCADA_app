@@ -12,3 +12,8 @@ passlib
 bcrypt<4.0.0
 PyJWT
 python-multipart
+
+joblib
+scikit-learn
+xgboost
+numpy

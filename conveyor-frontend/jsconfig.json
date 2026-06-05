@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx"
+  },
+  "exclude": ["node_modules", "dist"]
+}

@@ -16,7 +16,7 @@ function ItemsCounter({ items, target, offline }) {
 
       {/* Top: label + big number */}
       <div>
-        <p className="text-[8px] tracking-widest text-[var(--color-text-dim)] mb-2">
+        <p className="text-[11px] tracking-widest text-[var(--color-text-dim)] mb-2">
           ITEMS DETECTED TODAY
         </p>
 
@@ -28,7 +28,7 @@ function ItemsCounter({ items, target, offline }) {
           {items}
         </p>
 
-        <p className="text-[10px] tracking-widest text-[var(--color-text-dim)] mt-1">
+        <p className="text-[13px] tracking-widest text-[var(--color-text-dim)] mt-1">
           UNITS PASSED
         </p>
       </div>
@@ -36,11 +36,11 @@ function ItemsCounter({ items, target, offline }) {
       {/* Bottom: progress toward target */}
       <div>
         <div className="flex justify-between items-center mb-1">
-          <span className="text-[8px] text-[var(--color-text-dim)] tracking-widest">
+          <span className="text-[11px] text-[var(--color-text-dim)] tracking-widest">
             DAILY TARGET
           </span>
           <span
-            className="text-[9px] font-mono"
+            className="text-[12px] font-mono"
             style={{ color: offline ? "var(--color-text-dim)" : "var(--color-primary)" }}
           >
             {pct}%
@@ -60,8 +60,8 @@ function ItemsCounter({ items, target, offline }) {
 
         {/* 0 → target labels */}
         <div className="flex justify-between mt-1">
-          <span className="text-[8px] text-[var(--color-text-dim)] font-mono">0</span>
-          <span className="text-[8px] text-[var(--color-text-dim)] font-mono">
+          <span className="text-[11px] text-[var(--color-text-dim)] font-mono">0</span>
+          <span className="text-[11px] text-[var(--color-text-dim)] font-mono">
             {target} target
           </span>
         </div>
