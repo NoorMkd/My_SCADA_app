@@ -137,6 +137,8 @@ async def _process_message(payload: dict):
             "is_running":      _motor_running,
             "items_today":     items_today,
             "daily_target":    config.todays_target,
+            "max_freq_hz":     config.max_freq_hz,
+            "min_freq_hz":     config.min_freq_hz,
             "runtime_seconds": runtime_seconds,
             "timestamp":       datetime.now(timezone.utc).isoformat(),
         }
@@ -170,6 +172,17 @@ def _run_mqtt_forever():
             print(f"[MQTT] Could not connect to broker: {e}")
             print(f"[MQTT] Retrying in 5 seconds...")
             time.sleep(5)
+
+
+def publish_freq_config(max_hz: float, min_hz: float) -> bool:
+    if _mqtt_client is None or not _mqtt_client.is_connected():
+        print("[MQTT] Error: Client not connected, cannot publish freq config.")
+        return False
+    import json as _json
+    payload = _json.dumps({"cmd": "set_freq_limits", "max_hz": max_hz, "min_hz": min_hz})
+    _mqtt_client.publish(settings.MQTT_TOPIC_COMMANDS, payload, qos=1)
+    print(f"[MQTT] Freq config sent → max={max_hz} Hz  min={min_hz} Hz")
+    return True
 
 
 def publish_command(command: str):

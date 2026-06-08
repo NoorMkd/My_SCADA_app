@@ -7,6 +7,7 @@ from app.schemas import ProductionConfigIn, ProductionConfigOut
 from app.crud import get_production_config, update_production_config
 from app.auth import get_current_user
 from app.models import User
+from app.mqtt_handler import publish_freq_config
 
 router = APIRouter(prefix="/api/production", tags=["production"])
 
@@ -29,4 +30,5 @@ async def update_config(
     if current_user.role not in ["admin", "operator"]:
         raise HTTPException(status_code=403, detail="Not authorized to update config.")
     config = await update_production_config(db, config_in.model_dump())
+    publish_freq_config(config.max_freq_hz, config.min_freq_hz)
     return config

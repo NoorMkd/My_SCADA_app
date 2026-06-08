@@ -92,7 +92,7 @@ function BeltSpeedGauge({ value, offline }) {
 
         {/* Min / Max labels */}
         <text x="8"   y="92" fill="#ffffff" fontWeight="bold" fontSize="9">0</text>
-        <text x="107" y="92" fill="#ffffff" fontWeight="bold" fontSize="9">68</text>
+        <text x="107" y="92" fill="#ffffff" fontWeight="bold" fontSize="9">1360</text>
       </svg>
 
       {/* Status */}

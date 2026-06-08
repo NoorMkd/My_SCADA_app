@@ -71,6 +71,14 @@ async def init_db():
         await conn.run_sync(Base.metadata.create_all)
         print("[DB] All tables created (or already existed)")
 
+        # ── Column migrations (safe — IF NOT EXISTS) ─────────
+        for ddl in [
+            "ALTER TABLE production_config ADD COLUMN IF NOT EXISTS max_freq_hz FLOAT DEFAULT 50.0",
+            "ALTER TABLE production_config ADD COLUMN IF NOT EXISTS min_freq_hz FLOAT DEFAULT 0.0",
+        ]:
+            await conn.execute(text(ddl))
+        print("[DB] production_config columns up to date")
+
         # ── TimescaleDB hypertable ────────────────────────────
         # What is a hypertable?
         #   A normal PostgreSQL table stores all rows together.

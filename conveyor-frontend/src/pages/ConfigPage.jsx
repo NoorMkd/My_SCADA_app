@@ -14,6 +14,8 @@ export default function ConfigPage() {
   
   const [config, setConfig] = useState({
     todays_target: 1000,
+    max_freq_hz: 50.0,
+    min_freq_hz: 0.0,
     material_name: "Standard Box",
     material_type: "Cardboard",
     item_length_cm: 10.0,
@@ -58,6 +60,8 @@ export default function ConfigPage() {
       const data = await res.json();
       setConfig({
         todays_target: data.todays_target,
+        max_freq_hz: data.max_freq_hz ?? 50.0,
+        min_freq_hz: data.min_freq_hz ?? 0.0,
         material_name: data.material_name,
         material_type: data.material_type,
         item_length_cm: data.item_length_cm,
@@ -165,6 +169,36 @@ export default function ConfigPage() {
                     type="number"
                     name="todays_target"
                     value={config.todays_target}
+                    onChange={handleChange}
+                    className="w-full bg-gray-700 text-white rounded p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={user?.role !== "admin" && user?.role !== "operator"}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">Max Frequency (Hz)</label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    max="50"
+                    name="max_freq_hz"
+                    value={config.max_freq_hz}
+                    onChange={handleChange}
+                    className="w-full bg-gray-700 text-white rounded p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={user?.role !== "admin" && user?.role !== "operator"}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">Min Frequency (Hz)</label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    max="50"
+                    name="min_freq_hz"
+                    value={config.min_freq_hz}
                     onChange={handleChange}
                     className="w-full bg-gray-700 text-white rounded p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     disabled={user?.role !== "admin" && user?.role !== "operator"}

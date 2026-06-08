@@ -31,6 +31,7 @@ from datetime import datetime, timezone, timedelta
 from app.models import SensorReading, MaintenanceIntervention, MLPrediction, ProductionConfig
 from app import ml_engine
 
+from app.email_alerts import check_and_send_alerts
 
 
 
@@ -41,6 +42,7 @@ from app import ml_engine
 # ============================================================
 
 async def run_daily_predictions():
+    
     print("[ML] Running daily predictions...")
 
     async with AsyncSessionLocal() as db:
@@ -129,6 +131,9 @@ async def run_daily_predictions():
             oee        = ml_engine.calculate_oee(items_count, theoretical_max)
             maintenance = ml_engine.calculate_maintenance_due(days_since_maint)
 
+            # ── send email alerts if needed ───────────────────────
+            check_and_send_alerts(anomaly, rul, alert)
+
             # ── save to database ──────────────────────────
             prediction = MLPrediction(
                 conveyor_id             = 1,
@@ -175,7 +180,8 @@ async def run_daily_predictions():
 
         except Exception as e:
             print(f"[ML] Error during predictions: {e}")
-# ============================================================
+
+ # ============================================================
 # LIFESPAN
 # Code that runs at startup and shutdown.
 #

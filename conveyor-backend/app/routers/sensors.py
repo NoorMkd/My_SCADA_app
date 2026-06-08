@@ -112,6 +112,8 @@ async def get_latest(
         "is_running":       reading.status == "running",
         "items_today":      items_today,
         "daily_target":     config.todays_target if config else 300,
+        "max_freq_hz":      config.max_freq_hz if config else 50.0,
+        "min_freq_hz":      config.min_freq_hz if config else 0.0,
         "runtime_seconds":  runtime_seconds,
     }
 

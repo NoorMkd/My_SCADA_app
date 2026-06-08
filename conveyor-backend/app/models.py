@@ -53,6 +53,8 @@ class SensorReading(Base):
 
     # Fault message from ESP32 — None means no fault
     fault: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+
+
 # ============================================================
 # TABLE 2: maintenance_interventions
 # ============================================================
@@ -110,6 +112,8 @@ class ProductionConfig(Base):
         onupdate=func.now()
     )
     todays_target: Mapped[int] = mapped_column(Integer, default=1000)
+    max_freq_hz: Mapped[float] = mapped_column(Float, default=50.0)
+    min_freq_hz: Mapped[float] = mapped_column(Float, default=0.0)
     material_name: Mapped[str] = mapped_column(String(100), default="Standard Box")
     material_type: Mapped[str] = mapped_column(String(50), default="Cardboard")
     item_length_cm: Mapped[float] = mapped_column(Float, default=10.0)

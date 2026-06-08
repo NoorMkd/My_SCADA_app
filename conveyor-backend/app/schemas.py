@@ -166,6 +166,8 @@ class UserResponse(BaseModel):
 # ============================================================
 class ProductionConfigBase(BaseModel):
     todays_target: int
+    max_freq_hz: float = 50.0
+    min_freq_hz: float = 0.0
     material_name: str
     material_type: str
     item_length_cm: float

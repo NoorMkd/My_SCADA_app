@@ -51,6 +51,10 @@ class Settings(BaseSettings):
     SECRET_KEY: str 
     ACCESS_TOKEN_EXPIRE_HOURS: int = 8
 
+    ALERT_EMAIL_SENDER: str = "alertsconveyor@gmail.com"
+    ALERT_EMAIL_PASSWORD: str = ""
+    ALERT_EMAIL_RECEIVER: str = "normkd111@gmail.com"
+
     # Tell Pydantic to read from the .env file
     model_config = SettingsConfigDict(
         env_file=".env",

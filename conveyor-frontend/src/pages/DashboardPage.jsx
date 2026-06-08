@@ -48,10 +48,8 @@ function DashboardPage() {
 
   if (!cv) return null
 
-  // TARGET Hz display — integer, "--" when null
-  const targetHz = (cv.freq_hz !== null && cv.freq_hz !== undefined)
-    ? Math.round(cv.freq_hz)
-    : "--"
+  // TARGET Hz — configured max frequency from production config
+  const targetHz = cv.maxFreqHz != null ? Math.round(cv.maxFreqHz) : "--"
 
   return (
     <div className="min-h-screen bg-bg-darker flex flex-col">
